@@ -1,23 +1,25 @@
 # MediaClean 🎵
 
-**MediaClean** is an automated music library ingestion, metadata standardization, and duplicate upgrade engine designed for self-hosted media servers (such as Jellyfin, Plex, and Navidrome).
+**MediaClean** is an automated music library ingestion, metadata standardization, fuzzy artist deduplication, and quality upgrade engine designed for self-hosted media servers (such as Jellyfin, Plex, and Navidrome).
 
-It eliminates messy tags, rogue artist cards, unorganized folders, and low-quality duplicates by enforcing strict taxonomy, audio encoding standards, and directory structures.
+It permanently eliminates messy tags, rogue artist cards, unorganized folders, and low-quality duplicates by enforcing strict taxonomy, audio encoding standards, and directory structures.
 
 ---
 
 ## ✨ Features
 
 - **🚀 1-Click Intake Workflow:** Drop albums into `_INCOMING` and run `INGEST_NEW_MUSIC.bat` (or `python ingest_new_music.py`).
+- **🔍 Pre-Flight Fuzzy Deduplication:** Ingestion checks existing library artist names using fuzzy string matching ($\ge 90\%$). Prevents typos like `Meat Bea Manifesto` or `Alexander Robotnik` from creating duplicate artist cards.
 - **🎧 Auto FLAC / Lossless to 320k MP3 Conversion:** Automatically detects uncompressed audio (`.flac`, `.wav`, `.m4a`, `.ogg`, `.aiff`) and converts them to **320 kbps constant bitrate stereo MP3s** (`-c:a libmp3lame -b:a 320k -ac 2`) via `ffmpeg`, transferring 100% of metadata.
 - **🧠 Duplicate Album & Quality Upgrade Engine:**
   - **Completeness Rule:** Automatically upgrades incomplete albums to full releases / Deluxe editions if incoming has more tracks.
   - **Quality Rule:** Upgrades lower-bitrate rips to 320 kbps MP3s while discarding inferior duplicates.
 - **🏷️ Strict 2-Tier Genre Taxonomy:** Replaces cluttered genre tags with a clean `Main Genre; Subgenre` hierarchy (e.g. `Rock; Metal`, `Electronic; Techno`).
-- **🔤 Title-Case & Casing Harmonization:** Eliminates duplicate artist entries caused by mixed case (e.g. `BauHaus` vs `Bauhaus`), while preserving legitimate acronyms (`2Pac`, `OMD`, `UB40`, `AFX`, `RJD2`, `U2`, `XTC`, `KMFDM`, `Neu!`, `Sunn O)))`).
-- **🔢 Track-Prefix Stripping:** Cleans accidental track numbers from artist fields (e.g., `01 culture club` $\rightarrow$ `Culture Club`), while protecting real numeric bands (`10cc`, `311`, `16 Volt`, `808 State`, `404.Zero`).
+- **🔤 Acronym & Stylization Whitelist:** Preserves legitimate acronyms (`MDFMK`, `MASTER BOOT RECORD`, `KMFDM`, `2Pac`, `OMD`, `UB40`, `AFX`, `RJD2`, `U2`, `XTC`, `B12`, `154`, `69`, `16B`, `Alt-J`).
+- **🔢 Track-Prefix Stripping:** Cleans accidental track numbers from artist fields (e.g., `01 culture club` $\rightarrow$ `Culture Club`, `01 - 12 - Uberzone` $\rightarrow$ `Uberzone`).
 - **🖼️ Media Asset & Artwork Migration:** Automatically moves cover art, booklets, and images (`.jpg`, `.jpeg`, `.png`, `.webp`, `.pdf`) into the destination album directory and removes leftover junk (`.nfo`, `.m3u`, `.sfv`, `.cue`, `.log`).
 - **🧹 Guaranteed Clean Staging:** Completely prunes all empty folders and non-audio junk from `_INCOMING` after every successful run.
+- **🔄 Library-Wide Deduplication Engine:** Run `python unify_and_deduplicate_artists.py` anytime to scan all libraries, cluster duplicates, and execute safe two-step Windows folder merges.
 
 ---
 
@@ -55,19 +57,19 @@ pip install -r requirements.txt
 
 ## 🚀 Usage
 
-### 1. Configuration
-Open `ingest_new_music.py` and set your music root directory:
-```python
-ROOT_DIR = r"\\CHRISGRANTS\files\Media\Music Albums"
-```
-
-### 2. Ingesting Music
+### 1. Ingesting New Music
 1. Drop your new music folders or tracks into:
    ```text
    <Music Root>/_INCOMING
    ```
 2. Double-click **`INGEST_NEW_MUSIC.bat`** (or run `python ingest_new_music.py`).
 3. In your Jellyfin/Plex dashboard, click **"Scan All Libraries"**.
+
+### 2. Running Library-Wide Deduplication
+To audit and merge duplicates across your existing libraries:
+```bash
+python unify_and_deduplicate_artists.py
+```
 
 ---
 

@@ -1,6 +1,7 @@
 import os
 import sys
 import re
+import difflib
 import shutil
 import subprocess
 import unicodedata
@@ -109,7 +110,7 @@ VALID_NUMERIC_BANDS = {
     "2pac", "10cc", "311", "16 volt", "9 lazy 9", "2 bad mice", "1 giant leap",
     "16 bit lolitas", "16 bit lolita's", "51 days", "2 player", "3 phase", "12 gauge",
     "702", "808 state", "404.zero", "65daysofstatic", "100 gecs", "24kgo1dn",
-    "23 skidoo", "4hero", "2 brothers on the 4th floor"
+    "23 skidoo", "4hero", "2 brothers on the 4th floor", "b12", "154", "69", "16b"
 }
 
 EXACT_OVERRIDES = {
@@ -154,9 +155,20 @@ EXACT_OVERRIDES = {
     "pj harvey": "PJ Harvey",
     "cj bolland": "CJ Bolland",
     "kmfdm": "KMFDM",
+    "mdfmk": "MDFMK",
+    "master boot record": "MASTER BOOT RECORD",
     "inxs": "INXS",
     "acdc": "AC/DC",
-    "ac/dc": "AC/DC"
+    "ac/dc": "AC/DC",
+    "alexander robotnick": "Alexander Robotnick",
+    "air liquide": "Air Liquide",
+    "alabaster deplume": "Alabaster DePlume",
+    "meat beat manifesto": "Meat Beat Manifesto",
+    "alt-j": "Alt-J",
+    "alt - j": "Alt-J",
+    "the chemical brothers": "The Chemical Brothers",
+    "fatboy slim": "Fatboy Slim",
+    "traci lords": "Traci Lords"
 }
 
 IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.gif', '.pdf'}
@@ -198,7 +210,7 @@ def to_standard_title_case(name):
             title_words.append(w.capitalize())
     return ' '.join(title_words)
 
-def clean_artist_name(name):
+def clean_artist_name(name, target_lib=None):
     if not name: return "Unknown Artist"
     name_str = strip_accents(name).strip()
     if name_str.lower() in ["<unbekannt>", "unbekannt", "<unknown>", "unknown"]:
@@ -208,15 +220,35 @@ def clean_artist_name(name):
     if norm_lower in VALID_NUMERIC_BANDS:
         return name_str
 
+    # Accidental track prefix
     m = re.match(r'^\s*(\d{1,2}|[A-Z]\d{1,2}|\d{1,2}-\d{1,2})[\s\.\-_]+(.+)$', name_str)
     if m:
-        candidate = m.group(2).strip()
-        candidate_norm = re.sub(r'[^\w\s]', '', candidate.lower()).strip()
-        if candidate_norm in VALID_NUMERIC_BANDS:
-            return candidate
-        return to_standard_title_case(candidate)
+        cand = m.group(2).strip()
+        cand_norm = re.sub(r'[^\w\s]', '', cand.lower()).strip()
+        if cand_norm in VALID_NUMERIC_BANDS:
+            candidate = cand
+        else:
+            candidate = to_standard_title_case(cand)
+    else:
+        candidate = to_standard_title_case(name_str)
 
-    return to_standard_title_case(name_str)
+    # Fuzzy check against existing artists in target library
+    if target_lib:
+        lib_dir = os.path.join(ROOT_DIR, target_lib)
+        if os.path.exists(lib_dir):
+            existing_artists = [d for d in os.listdir(lib_dir) if os.path.isdir(os.path.join(lib_dir, d))]
+            cand_norm = re.sub(r'[^\w\s]', '', candidate.lower()).strip()
+            for ex in existing_artists:
+                if ex.lower() in ["compilations", "_incoming", "soundtracks"]: continue
+                ex_norm = re.sub(r'[^\w\s]', '', ex.lower()).strip()
+                if cand_norm == ex_norm:
+                    return ex
+                ratio = difflib.SequenceMatcher(None, cand_norm, ex_norm).ratio()
+                if ratio >= 0.90 and abs(len(cand_norm) - len(ex_norm)) <= 2:
+                    print(f"    [Fuzzy Match] Ingested '{candidate}' matched existing '{ex}' ({ratio*100:.1f}%) -> Using: '{ex}'")
+                    return ex
+
+    return candidate
 
 def map_genre(genre_str):
     if not genre_str:
@@ -271,8 +303,7 @@ def read_and_clean_tags(filepath):
     tags = {'artist': None, 'albumartist': None, 'album': None, 'title': None, 'track': None, 'genre': None}
     try:
         if ext == '.mp3':
-            try:
-                audio = EasyID3(filepath)
+            try: audio = EasyID3(filepath)
             except mutagen.id3.ID3NoHeaderError:
                 audio = mutagen.File(filepath, easy=True)
                 audio.add_tags()
@@ -316,8 +347,7 @@ def write_tags(filepath, tags):
     ext = os.path.splitext(filepath)[1].lower()
     try:
         if ext == '.mp3':
-            try:
-                audio = EasyID3(filepath)
+            try: audio = EasyID3(filepath)
             except mutagen.id3.ID3NoHeaderError:
                 audio = mutagen.File(filepath, easy=True)
                 audio.add_tags()
@@ -422,27 +452,18 @@ def evaluate_album_quality(file_list):
     return avg_score, summary_desc
 
 def migrate_media_assets(src_dir, dest_dir):
-    """
-    Moves cover art, booklet images, and media assets to the destination album folder.
-    Removes any leftover log/cue/nfo junk files from src_dir.
-    """
-    if not os.path.exists(src_dir):
-        return
-
+    if not os.path.exists(src_dir): return
     for item in os.listdir(src_dir):
         src_item = os.path.join(src_dir, item)
         ext = os.path.splitext(item)[1].lower()
-
         if os.path.isfile(src_item):
-            # Artwork / Media Assets -> Move to destination album folder
             if ext in IMAGE_EXTENSIONS:
                 dest_item = os.path.join(dest_dir, item)
                 if not os.path.exists(dest_item):
                     try:
                         shutil.move(src_item, dest_item)
                         print(f"  -> Migrated artwork: {item}")
-                    except Exception as e:
-                        print(f"  [!] Error moving artwork {item}: {e}")
+                    except: pass
                 else:
                     try: os.remove(src_item)
                     except: pass
@@ -451,7 +472,6 @@ def migrate_media_assets(src_dir, dest_dir):
                 except: pass
 
 def clean_entire_incoming_directory():
-    """Recursively deletes all leftover non-audio junk and empty subdirectories in _INCOMING."""
     for root, dirs, files in os.walk(INCOMING_DIR, topdown=False):
         for f in files:
             fp = os.path.join(root, f)
@@ -462,10 +482,8 @@ def clean_entire_incoming_directory():
         for d in dirs:
             dp = os.path.join(root, d)
             try:
-                if not os.listdir(dp):
-                    os.rmdir(dp)
-            except Exception:
-                pass
+                if not os.listdir(dp): os.rmdir(dp)
+            except: pass
 
 def main():
     print("==========================================================")
@@ -475,10 +493,8 @@ def main():
     if not os.path.exists(INCOMING_DIR):
         os.makedirs(INCOMING_DIR, exist_ok=True)
         print(f"Created staging directory: {INCOMING_DIR}")
-        print("Drop new albums/tracks into _INCOMING and run this script again!")
         return
 
-    # Scan for all audio files in _INCOMING
     raw_incoming = []
     for root, dirs, files in os.walk(INCOMING_DIR):
         for f in files:
@@ -486,13 +502,10 @@ def main():
                 raw_incoming.append(os.path.join(root, f))
 
     if not raw_incoming:
-        # Check if there are only leftover art/folders to clean
         clean_entire_incoming_directory()
         print(f"No audio files found in: {INCOMING_DIR}")
-        print("Cleaned leftover folders. Drop your new music into _INCOMING to begin ingestion.")
         return
 
-    # Convert any non-MP3 (FLAC, WAV, etc.) to 320 kbps MP3 stereo
     converted_files = []
     has_non_mp3 = any(not fp.lower().endswith('.mp3') for fp in raw_incoming)
     if has_non_mp3:
@@ -508,7 +521,6 @@ def main():
 
     print(f"\nFound {len(converted_files)} 320k MP3 tracks to ingest.\n")
 
-    # Group by directory to process per-album
     dirs_map = {}
     for fp in converted_files:
         d = os.path.dirname(fp)
@@ -522,13 +534,16 @@ def main():
         sample_file = files[0]
         sample_tags = read_and_clean_tags(sample_file)
         
-        art = clean_artist_name(sample_tags.get('artist') or "Unknown Artist")
         alb = strip_accents(sample_tags.get('album') or os.path.basename(d))
         gen = map_genre(sample_tags.get('genre'))
+        raw_art = sample_tags.get('artist') or "Unknown Artist"
 
-        target_lib = infer_library(gen, art, alb, sample_file)
+        target_lib = infer_library(gen, raw_art, alb, sample_file)
         if not target_lib:
-            target_lib = prompt_user_for_library(alb, art, gen)
+            target_lib = prompt_user_for_library(alb, raw_art, gen)
+
+        # Clean artist name with fuzzy match against target library
+        art = clean_artist_name(raw_art, target_lib=target_lib)
 
         is_comp = "various" in art.lower() or "compilation" in d.lower()
         album_artist = "Various Artists" if is_comp else art
@@ -566,7 +581,6 @@ def main():
                     for fp in files:
                         try: os.remove(fp)
                         except: pass
-                    # Clean source folder
                     migrate_media_assets(d, dest_dir)
                     total_skipped += incoming_count
                     continue
@@ -583,7 +597,6 @@ def main():
                         for fp in files:
                             try: os.remove(fp)
                             except: pass
-                        # Clean source folder
                         migrate_media_assets(d, dest_dir)
                         total_skipped += incoming_count
                         continue
@@ -592,7 +605,7 @@ def main():
 
         for filepath in files:
             tags = read_and_clean_tags(filepath)
-            track_artist = clean_artist_name(tags.get('artist') or art)
+            track_artist = clean_artist_name(tags.get('artist') or art, target_lib=target_lib)
             track_title = strip_accents(tags.get('title') or os.path.splitext(os.path.basename(filepath))[0])
             track_num = tags.get('track')
             track_genre = map_genre(tags.get('genre') or gen)
@@ -622,10 +635,8 @@ def main():
             total_ingested += 1
             print(f"  -> Ingested: {dest_filename}")
 
-        # Migrate artwork (Cover.jpg, etc.) and clean junk in source directory
         migrate_media_assets(d, dest_dir)
 
-    # Purge all empty folders and non-audio junk across entire _INCOMING directory
     clean_entire_incoming_directory()
 
     print(f"\n==========================================================")
