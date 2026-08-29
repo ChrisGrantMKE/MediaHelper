@@ -220,7 +220,6 @@ def clean_artist_name(name, target_lib=None):
     if norm_lower in VALID_NUMERIC_BANDS:
         return name_str
 
-    # Accidental track prefix
     m = re.match(r'^\s*(\d{1,2}|[A-Z]\d{1,2}|\d{1,2}-\d{1,2})[\s\.\-_]+(.+)$', name_str)
     if m:
         cand = m.group(2).strip()
@@ -232,7 +231,6 @@ def clean_artist_name(name, target_lib=None):
     else:
         candidate = to_standard_title_case(name_str)
 
-    # Fuzzy check against existing artists in target library
     if target_lib:
         lib_dir = os.path.join(ROOT_DIR, target_lib)
         if os.path.exists(lib_dir):
@@ -485,6 +483,40 @@ def clean_entire_incoming_directory():
                 if not os.listdir(dp): os.rmdir(dp)
             except: pass
 
+def print_ascii_destination_tree(dest_dir, single_file_name=None):
+    """
+    Renders a clean ASCII folder tree diagram from the Media Albums root
+    down to the final destination folder and files.
+    """
+    rel_path = os.path.relpath(dest_dir, ROOT_DIR)
+    parts = rel_path.split(os.sep)
+
+    print("\n  =======================================================")
+    print("  📁 Destination Tree from Media Root:")
+    print("  Music Albums/")
+    indent = "  "
+    for idx, part in enumerate(parts):
+        is_last = (idx == len(parts) - 1)
+        prefix = "└── " if is_last else "├── "
+        indent += "    "
+        print(f"{indent[:-4]}{prefix}{part}/")
+
+    # List files in the destination
+    file_indent = indent + "    "
+    if single_file_name:
+        print(f"{file_indent[:-4]}└── 🎵 {single_file_name}")
+    elif os.path.exists(dest_dir):
+        files_in_dest = sorted(os.listdir(dest_dir))
+        for f_idx, fname in enumerate(files_in_dest):
+            if os.path.isdir(os.path.join(dest_dir, fname)):
+                continue
+            is_last_file = (f_idx == len(files_in_dest) - 1)
+            f_prefix = "└── " if is_last_file else "├── "
+            ext = os.path.splitext(fname)[1].lower()
+            icon = "🖼️ " if ext in IMAGE_EXTENSIONS else "🎵 "
+            print(f"{file_indent[:-4]}{f_prefix}{icon}{fname}")
+    print("  =======================================================\n")
+
 def main():
     print("==========================================================")
     print("    Music Server Ingestion & Auto-Standardization Engine  ")
@@ -542,7 +574,6 @@ def main():
         if not target_lib:
             target_lib = prompt_user_for_library(alb, raw_art, gen)
 
-        # Clean artist name with fuzzy match against target library
         art = clean_artist_name(raw_art, target_lib=target_lib)
 
         is_comp = "various" in art.lower() or "compilation" in d.lower()
@@ -636,6 +667,10 @@ def main():
             print(f"  -> Ingested: {dest_filename}")
 
         migrate_media_assets(d, dest_dir)
+
+        # Print the ASCII tree diagram showing the exact destination structure
+        single_file = dest_filename if len(files) == 1 and d == INCOMING_DIR else None
+        print_ascii_destination_tree(dest_dir, single_file_name=single_file)
 
     clean_entire_incoming_directory()
 
