@@ -168,7 +168,10 @@ EXACT_OVERRIDES = {
     "alt - j": "Alt-J",
     "the chemical brothers": "The Chemical Brothers",
     "fatboy slim": "Fatboy Slim",
-    "traci lords": "Traci Lords"
+    "traci lords": "Traci Lords",
+    "clock dva": "Clock DVA",
+    "add n to (x)": "Add N to (X)",
+    "circuit des yeux": "Circuit des Yeux"
 }
 
 IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.gif', '.pdf'}
@@ -219,6 +222,10 @@ def clean_artist_name(name, target_lib=None):
     norm_lower = re.sub(r'[^\w\s]', '', name_str.lower()).strip()
     if norm_lower in VALID_NUMERIC_BANDS:
         return name_str
+
+    # Accidental pure-number tag (e.g. '03', '12') that is not a valid band
+    if re.match(r'^\d{1,3}$', name_str) or re.match(r'^[A-Za-z]\d{1,2}$', name_str):
+        return "Unknown Artist"
 
     m = re.match(r'^\s*(\d{1,2}|[A-Z]\d{1,2}|\d{1,2}-\d{1,2})[\s\.\-_]+(.+)$', name_str)
     if m:
