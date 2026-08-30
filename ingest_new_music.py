@@ -207,12 +207,28 @@ def to_standard_title_case(name):
         return EXACT_OVERRIDES[name_str.lower()]
 
     minor_words = {'a', 'an', 'and', 'as', 'at', 'but', 'by', 'for', 'in', 'of', 'on', 'or', 'the', 'to', 'with', 'vs', 'feat'}
+    is_entire_string_upper = name_str.isupper() and len(name_str.split()) > 1
     words = name_str.split(' ')
     title_words = []
     for idx, w in enumerate(words):
         w_lower = w.lower()
-        if idx > 0 and w_lower in minor_words:
-            title_words.append(w_lower)
+        if w_lower in minor_words:
+            if idx == 0:
+                title_words.append(w.capitalize())
+            else:
+                title_words.append(w_lower)
+        elif len(w) == 2 and not any(v in w_lower for v in 'aeiouy'):
+            # 2-letter non-vowel words like 'dj', 'mc', 'rs', 'tv', 'uk' are always uppercase acronyms
+            title_words.append(w.upper())
+        elif is_entire_string_upper:
+            # Entire string was ALL CAPS: keep short acronyms, title-case regular words
+            if len(w) <= 3 and (not any(v in w_lower for v in 'aeiou') or w_lower in ['dva', 'u2']):
+                title_words.append(w)
+            else:
+                title_words.append(w.capitalize())
+        elif w.isupper() and 2 <= len(w) <= 5:
+            # Preserves mixed-case acronyms like 'RS Tangent', 'Clock DVA', 'MDFMK', 'KMFDM'
+            title_words.append(w)
         else:
             title_words.append(w.capitalize())
     return ' '.join(title_words)
