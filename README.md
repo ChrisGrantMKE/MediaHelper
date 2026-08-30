@@ -20,6 +20,7 @@ It permanently eliminates messy tags, rogue artist cards, unorganized folders, a
 - **🖼️ Media Asset & Artwork Migration:** Automatically moves cover art, booklets, and images (`.jpg`, `.jpeg`, `.png`, `.webp`, `.pdf`) into the destination album directory and removes leftover junk (`.nfo`, `.m3u`, `.sfv`, `.cue`, `.log`).
 - **🧹 Guaranteed Clean Staging:** Completely prunes all empty folders and non-audio junk from `_INCOMING` after every successful run.
 - **🔄 Library-Wide Deduplication Engine:** Run `python unify_and_deduplicate_artists.py` anytime to scan all libraries, cluster duplicates, and execute safe two-step Windows folder merges.
+- **🧹 Jellyfin Ghost Artist Purge Engine:** Run `sudo python3 clean_jellyfin_db.py` directly on the server to automatically purge orphaned 0-track ghost artist cards left behind in Jellyfin's SQLite database (`jellyfin.db`), complete with automatic pre-run backups.
 
 ---
 
@@ -70,6 +71,17 @@ To audit and merge duplicates across your existing libraries:
 ```bash
 python unify_and_deduplicate_artists.py
 ```
+
+### 3. Purging Jellyfin Ghost Artists from the Database
+If Jellyfin retains empty ghost artist cards (e.g. after casing changes or removed albums):
+```bash
+# On your server host (or inside Docker):
+docker stop jellyfin
+sudo python3 clean_jellyfin_db.py
+docker start jellyfin
+```
+The script will automatically back up your database, identify all 0-song ghost records, delete them, and optimize SQLite.
+
 
 ---
 

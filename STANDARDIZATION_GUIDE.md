@@ -191,3 +191,39 @@ To guarantee that Jellyfin consolidates all works by an artist onto a single art
      `2Pac`, `10cc`, `311`, `16 Volt`, `9 Lazy 9`, `2 Bad Mice`, `1 Giant Leap`, `16 Bit Lolitas`, `51 Days`, `2 Player`, `3 Phase`, `12 Gauge`, `702`, `808 State`, `404.Zero`, `65daysofstatic`, `100 gecs`, `23 Skidoo`, `4Hero`, `2 Brothers On The 4th Floor`.
 6. **No `<Unbekannt>` / Untagged Folders:**
    - Any placeholder foreign tags (like `<Unbekannt>`) are mapped to clean compilations under `Ambient Classical & Jazz`.
+
+---
+
+## 5. Jellyfin Ghost Artist Elimination & Database Maintenance
+
+### The Problem: Why Jellyfin Retains Duplicate / Ghost Artists
+In Jellyfin (10.8+ through 10.11+), **`MusicArtist` entries are stored in a global table (`BaseItems`) shared across the entire server, independent of individual library folders**.
+
+* When audio files on disk are renamed or updated to new tags (e.g. from `BauHaus` $\rightarrow$ `Bauhaus` or `bog body` $\rightarrow$ `Bog Body`), Jellyfin's standard "Scan Media Library" updates the tracks and links them to the new artist.
+* **Jellyfin does NOT delete the old artist record from `BaseItems`.**
+* Even when an artist record has **0 songs and 0 albums**, it remains in the database as an orphaned "ghost card" with a blank silhouette or blurred thumbnail.
+* Removing and re-adding libraries **does not clear them**, because library removal only deletes library containers—it never purges global artist records.
+
+### The Solution: Automated Database Purge (`clean_jellyfin_db.py`)
+The included maintenance script **`clean_jellyfin_db.py`** connects directly to Jellyfin's SQLite database (`jellyfin.db`), scans `BaseItems` for all active audio tracks, and permanently removes all orphaned artist records that have zero tracks.
+
+#### How to Run on the Ubuntu Host / Docker:
+1. Stop Jellyfin:
+   ```bash
+   docker stop jellyfin
+   # (or: sudo systemctl stop jellyfin)
+   ```
+2. Run the cleaner:
+   ```bash
+   sudo python3 clean_jellyfin_db.py
+   ```
+3. Start Jellyfin:
+   ```bash
+   docker start jellyfin
+   # (or: sudo systemctl start jellyfin)
+   ```
+The script automatically:
+1. Creates a timestamped `.bak` safety backup of `jellyfin.db`.
+2. Inspects all active audio tracks in `BaseItems`.
+3. Identifies every 0-song ghost artist and removes its orphaned record.
+4. Executes SQLite `VACUUM` to compact and optimize the database.
