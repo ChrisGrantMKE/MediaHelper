@@ -171,7 +171,11 @@ EXACT_OVERRIDES = {
     "traci lords": "Traci Lords",
     "clock dva": "Clock DVA",
     "add n to (x)": "Add N to (X)",
-    "circuit des yeux": "Circuit des Yeux"
+    "circuit des yeux": "Circuit des Yeux",
+    "rs tangent": "RS Tangent",
+    "misfits": "Misfits",
+    "the misfits": "Misfits",
+    "מזמור": "Mizmor"
 }
 
 IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.gif', '.pdf'}
@@ -242,12 +246,28 @@ def clean_artist_name(name, target_lib=None):
         lib_dir = os.path.join(ROOT_DIR, target_lib)
         if os.path.exists(lib_dir):
             existing_artists = [d for d in os.listdir(lib_dir) if os.path.isdir(os.path.join(lib_dir, d))]
-            cand_norm = re.sub(r'[^\w\s]', '', candidate.lower()).strip()
+            
+            def norm_art(s):
+                s = strip_accents(s).lower()
+                if s == "מזמור": return "mizmor"
+                s = re.sub(r'^(the|a|an)\s+', '', s)
+                s = re.sub(r'\b(and)\b', '&', s)
+                s = re.sub(r'[^\w\s]', '', s)
+                return re.sub(r'\s+', ' ', s).strip()
+
+            cand_norm = norm_art(candidate)
+
             for ex in existing_artists:
                 if ex.lower() in ["compilations", "_incoming", "soundtracks"]: continue
-                ex_norm = re.sub(r'[^\w\s]', '', ex.lower()).strip()
+                ex_norm = norm_art(ex)
+
+                # Hard protection against false positives
+                if frozenset([cand_norm, ex_norm]) in {frozenset(['live', 'olive']), frozenset(['mesh', 'nmesh'])}:
+                    continue
+
                 if cand_norm == ex_norm:
                     return ex
+
                 ratio = difflib.SequenceMatcher(None, cand_norm, ex_norm).ratio()
                 if ratio >= 0.90 and abs(len(cand_norm) - len(ex_norm)) <= 2:
                     print(f"    [Fuzzy Match] Ingested '{candidate}' matched existing '{ex}' ({ratio*100:.1f}%) -> Using: '{ex}'")
