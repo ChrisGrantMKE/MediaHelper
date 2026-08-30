@@ -22,6 +22,9 @@ LIBRARIES = [
 ]
 
 EXACT_OVERRIDES = {
+    "master boot record": "MASTER BOOT RECORD",
+    "circuit des yeux": "Circuit des Yeux",
+    "alabaster deplume": "Alabaster DePlume",
     "misfits": "Misfits",
     "the misfits": "Misfits",
     "2pac": "2Pac",
@@ -36,7 +39,8 @@ EXACT_OVERRIDES = {
     "outkast": "OutKast",
     "מזמור": "Mizmor",
     "jane's addiction": "Jane's Addiction",
-    "janes addiction": "Jane's Addiction"
+    "janes addiction": "Jane's Addiction",
+    "bob marley & the wailers": "Bob Marley & The Wailers"
 }
 
 FOREIGN_ALIASES = {
@@ -72,13 +76,16 @@ def to_canonical_case(name):
         return EXACT_OVERRIDES[name_str.lower()]
 
     minor_words = {'a', 'an', 'and', 'as', 'at', 'but', 'by', 'for', 'in', 'of', 'on', 'or', 'the', 'to', 'with', 'vs', 'feat'}
+    honorifics = {'mr', 'ms', 'dr', 'st', 'jr', 'sr', 'vs'}
     is_entire_string_upper = name_str.isupper() and len(name_str.split()) > 1
     words = name_str.split(' ')
     title_words = []
 
     for idx, w in enumerate(words):
         w_lower = w.lower()
-        if w_lower in minor_words:
+        if w_lower in honorifics:
+            title_words.append(w.capitalize())
+        elif w_lower in minor_words:
             if idx == 0:
                 title_words.append(w.capitalize())
             else:
