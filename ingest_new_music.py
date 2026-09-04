@@ -27,6 +27,53 @@ LIBRARIES = [
 ]
 
 GENRE_MAP = {
+    # Ambient & Modern Minimalist (High Precedence)
+    "dark ambient": "Ambient; Dark Ambient",
+    "space ambient": "Ambient; Space Ambient",
+    "ambient techno": "Ambient; Atmospheric",
+    "ambient dub": "Ambient; Atmospheric",
+    "ambient house": "Ambient; Atmospheric",
+    "downtempo ambient": "Ambient; Atmospheric",
+    "chillout": "Ambient; Atmospheric",
+    "chill": "Ambient; Atmospheric",
+    "soundscape": "Ambient; Atmospheric",
+    "field recording": "Ambient; Atmospheric",
+    "field recordings": "Ambient; Atmospheric",
+    "isolationist": "Ambient; Atmospheric",
+    "generative": "Ambient; Atmospheric",
+    "modular": "Ambient; Atmospheric",
+    "ethereal": "Ambient; Atmospheric",
+    "environmental": "Ambient; Atmospheric",
+    "new age": "Ambient; Space Ambient",
+    "space": "Ambient; Space Ambient",
+    "drone": "Ambient; Drone",
+    "atmospheric": "Ambient; Atmospheric",
+    "krautrock": "Ambient; Space Ambient",
+    "berlin school": "Ambient; Space Ambient",
+    "japanese ambient": "Ambient; Atmospheric",
+    "balearic": "Ambient; Atmospheric",
+    "illbient": "Ambient; Atmospheric",
+    "fourth world": "Ambient; Atmospheric",
+    "ambient": "Ambient; Atmospheric",
+
+    # Classical & Neo-Classical
+    "baroque": "Classical; Baroque",
+    "romantic": "Classical; Romantic",
+    "minimalism": "Classical; Minimalism",
+    "modern classical": "Classical; Contemporary Classical",
+    "neo-classical": "Classical; Contemporary Classical",
+    "contemporary classical": "Classical; Contemporary Classical",
+    "classical": "Classical; Contemporary Classical",
+
+    # Jazz
+    "bebop": "Jazz; Bebop",
+    "cool jazz": "Jazz; Cool Jazz",
+    "post-bop": "Jazz; Post-Bop",
+    "modal jazz": "Jazz; Modal Jazz",
+    "modal": "Jazz; Modal Jazz",
+    "fusion": "Jazz; Fusion",
+    "jazz": "Jazz; Cool Jazz",
+
     # Electronic
     "techno": "Electronic; Techno",
     "house": "Electronic; House",
@@ -39,6 +86,7 @@ GENRE_MAP = {
     "hardcore": "Electronic; Hardcore & Industrial",
     "industrial": "Electronic; Hardcore & Industrial",
     "electronic": "Electronic; IDM",
+    "electronica": "Electronic; IDM",
     
     # Rock
     "alternative": "Rock; Alternative Rock",
@@ -46,45 +94,22 @@ GENRE_MAP = {
     "hard rock": "Rock; Hard Rock",
     "punk": "Rock; Punk",
     "indie rock": "Rock; Indie Rock",
-    "metal": "Rock; Metal",
     "industrial metal": "Rock; Industrial Metal",
     "black metal": "Rock; Metal",
     "death metal": "Rock; Metal",
     "thrash metal": "Rock; Metal",
     "doom metal": "Rock; Metal",
     "heavy metal": "Rock; Metal",
+    "metal": "Rock; Metal",
     "prog": "Rock; Progressive Rock",
     "rock": "Rock; Classic Rock",
 
     # Pop
     "synthpop": "Pop; Synthpop",
     "indie pop": "Pop; Indie Pop",
-    "dance": "Pop; Dance-Pop",
     "dream pop": "Pop; Dream Pop",
+    "dance": "Pop; Dance-Pop",
     "pop": "Pop; Dance-Pop",
-
-    # Ambient
-    "dark ambient": "Ambient; Dark Ambient",
-    "space ambient": "Ambient; Space Ambient",
-    "space": "Ambient; Space Ambient",
-    "drone": "Ambient; Drone",
-    "atmospheric": "Ambient; Atmospheric",
-    "ambient": "Ambient; Atmospheric",
-
-    # Jazz
-    "bebop": "Jazz; Bebop",
-    "cool jazz": "Jazz; Cool Jazz",
-    "fusion": "Jazz; Fusion",
-    "post-bop": "Jazz; Post-Bop",
-    "modal": "Jazz; Modal Jazz",
-    "jazz": "Jazz; Cool Jazz",
-
-    # Classical
-    "baroque": "Classical; Baroque",
-    "romantic": "Classical; Romantic",
-    "minimalism": "Classical; Minimalism",
-    "contemporary classical": "Classical; Contemporary Classical",
-    "classical": "Classical; Contemporary Classical",
 
     # Folk & Country
     "americana": "Folk & Country; Americana",
@@ -104,6 +129,31 @@ GENRE_MAP = {
     "hip-hop": "Hip-Hop; East Coast Hip-Hop",
     "rap": "Hip-Hop; East Coast Hip-Hop",
     "trap": "Hip-Hop; Trap",
+}
+
+KNOWN_AMBIENT_ARTISTS = {
+    "susumu yokota", "lusine", "ludwig a.f. rohrscheid", "ludwig af rohrscheid", "ludwig a.f.",
+    "h. takahashi", "h.takahashi", "david edren", "alabaster deplume", "studio",
+    "brian eno", "harold budd", "stars of the lid", "william basinski", "biosphere",
+    "steve roach", "robert rich", "tim hecker", "fennesz", "loscil", "chihei hatakeyama",
+    "hiroshi yoshimura", "midori takada", "satoshi ashikawa", "klaus schulze",
+    "tangerine dream", "popol vuh", "manuel gottsching", "eluvium", "grouper",
+    "julianna barwick", "aphex twin - selected ambient works"
+}
+
+KNOWN_JAZZ_ARTISTS = {
+    "miles davis", "john coltrane", "bill evans", "thelonious monk", "charles mingus",
+    "herbie hancock", "wayne shorter", "chet baker", "dave brubeck", "ahmad jamal",
+    "the ahmad jamal trio", "sonny rollins", "art blakey", "al di meola", "chick corea",
+    "keith jarrett", "pat metheny", "sun ra", "pharoah sanders", "kamasi washington",
+    "yussef kamaal", "domi & jd beck"
+}
+
+KNOWN_CLASSICAL_ARTISTS = {
+    "johann sebastian bach", "j.s. bach", "bach", "ludwig van beethoven", "beethoven",
+    "wolfgang amadeus mozart", "mozart", "chopin", "debussy", "ravel", "tchaikovsky",
+    "brahms", "vivaldi", "philip glass", "steve reich", "max richter", "ludovico einaudi",
+    "olafur arnalds", "nils frahm", "arvo part", "joep beving"
 }
 
 VALID_NUMERIC_BANDS = {
@@ -242,6 +292,11 @@ def clean_artist_name(name, target_lib=None):
     if name_str.lower() in ["<unbekannt>", "unbekannt", "<unknown>", "unknown"]:
         return "Various Artists"
 
+    # Invert 'Last, First' (e.g. 'Yokota, Susumu' -> 'Susumu Yokota', 'Budd, Harold' -> 'Harold Budd')
+    m_inv = re.match(r'^([A-Z][a-zA-Z\.\'\-]+),\s+([A-Z][a-zA-Z\.\'\-]+)$', name_str)
+    if m_inv:
+        name_str = f"{m_inv.group(2)} {m_inv.group(1)}"
+
     norm_lower = re.sub(r'[^\w\s]', '', name_str.lower()).strip()
     if norm_lower in VALID_NUMERIC_BANDS:
         return name_str
@@ -294,18 +349,43 @@ def clean_artist_name(name, target_lib=None):
 
     return candidate
 
-def map_genre(genre_str):
-    if not genre_str:
-        return "Rock; Alternative Rock"
-    curr_lower = str(genre_str).lower()
+def map_genre(genre_str, artist=None, album=None, filepath=None):
+    # 1. Check known artist directories for high-confidence classification
+    if artist:
+        a_lower = strip_accents(artist).lower().strip()
+        a_norm = re.sub(r'[^\w\s]', '', a_lower)
+        if a_lower in KNOWN_AMBIENT_ARTISTS or a_norm in KNOWN_AMBIENT_ARTISTS or any(k in a_lower for k in ["brian eno", "stars of the lid", "tangerine dream", "klaus schulze", "susumu yokota", "lusine"]):
+            if any(k in a_lower for k in ["space", "tangerine dream", "klaus schulze", "rohrscheid", "apollo"]):
+                return "Ambient; Space Ambient"
+            return "Ambient; Atmospheric"
+        if a_lower in KNOWN_JAZZ_ARTISTS or a_norm in KNOWN_JAZZ_ARTISTS:
+            return "Jazz; Fusion"
+        if a_lower in KNOWN_CLASSICAL_ARTISTS or a_norm in KNOWN_CLASSICAL_ARTISTS:
+            return "Classical; Contemporary Classical"
+
+    # 2. Check genre tag, album name, and filepath against GENRE_MAP
+    search_context = []
+    if genre_str: search_context.append(str(genre_str).lower())
+    if album: search_context.append(str(album).lower())
+    if filepath: search_context.append(str(filepath).lower())
+    full_context = " ".join(search_context)
+
     for k, v in GENRE_MAP.items():
-        if k in curr_lower:
+        if k in full_context:
             return v
-    return "Rock; Alternative Rock"
+
+    return None
 
 def infer_library(genre, artist, album, filepath):
+    if not genre:
+        return None
+
     g_lower = genre.lower()
-    p_lower = filepath.lower()
+    p_lower = filepath.lower() if filepath else ""
+    a_lower = strip_accents(artist).lower().strip() if artist else ""
+
+    if a_lower in KNOWN_AMBIENT_ARTISTS or a_lower in KNOWN_JAZZ_ARTISTS or a_lower in KNOWN_CLASSICAL_ARTISTS:
+        return "Ambient Classical & Jazz"
 
     if any(x in g_lower for x in ["ambient", "classical", "jazz", "baroque", "romantic", "drone", "bebop"]):
         return "Ambient Classical & Jazz"
@@ -611,14 +691,23 @@ def main():
     for d, files in dirs_map.items():
         sample_file = files[0]
         sample_tags = read_and_clean_tags(sample_file)
-        
-        alb = strip_accents(sample_tags.get('album') or os.path.basename(d))
-        gen = map_genre(sample_tags.get('genre'))
         raw_art = sample_tags.get('artist') or "Unknown Artist"
+        alb = strip_accents(sample_tags.get('album') or os.path.basename(d))
+        gen = map_genre(sample_tags.get('genre'), artist=raw_art, album=alb, filepath=sample_file)
 
         target_lib = infer_library(gen, raw_art, alb, sample_file)
         if not target_lib:
             target_lib = prompt_user_for_library(alb, raw_art, gen)
+            if not gen:
+                lib_defaults = {
+                    "Ambient Classical & Jazz": "Ambient; Atmospheric",
+                    "Electronic": "Electronic; IDM",
+                    "Metal Industrial": "Rock; Metal",
+                    "Reggae & World": "R&B & Soul; Neo-Soul",
+                    "Rock & Pop": "Rock; Alternative Rock",
+                    "Soundtracks & Holiday": "Soundtracks & Holiday; Soundtrack"
+                }
+                gen = lib_defaults.get(target_lib, "Ambient; Atmospheric")
 
         art = clean_artist_name(raw_art, target_lib=target_lib)
 
@@ -685,7 +774,7 @@ def main():
             track_artist = clean_artist_name(tags.get('artist') or art, target_lib=target_lib)
             track_title = strip_accents(tags.get('title') or os.path.splitext(os.path.basename(filepath))[0])
             track_num = tags.get('track')
-            track_genre = map_genre(tags.get('genre') or gen)
+            track_genre = map_genre(tags.get('genre'), artist=track_artist, album=alb, filepath=filepath) or gen
 
             updated_tags = {
                 'artist': track_artist,

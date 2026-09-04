@@ -118,6 +118,14 @@ All audio files are tagged using the format:
   - `Ambient; Drone`
   - `Ambient; Space Ambient`
   - `Ambient; Atmospheric`
+  - `Ambient; Minimalism`
+
+#### Ambient & Modern Classical Classification Rules:
+1. **Expanded Ambient Keyword Net:** Ingestion scans genre tags, album titles, and folder names for ambient subgenres (`chillout`, `soundscape`, `drone`, `space ambient`, `field recordings`, `modular`, `generative`, `ethereal`, `environmental`, `new age`, `japanese ambient`, `krautrock`, `berlin school`, `ambient techno`, `ambient dub`, `balearic`). All matches map to **`Ambient; Atmospheric`** or **`Ambient; Space Ambient`** and route to **`Ambient Classical & Jazz`**.
+2. **Ambient Precedence Rule:** Specific ambient keywords take precedence over generic parent tags like `Electronic` or `Rock` (e.g. an album tagged `"Electronic, Ambient"` is classified as Ambient).
+3. **Automatic `Last, First` Inversion:** Classical and Japanese naming styles (`Yokota, Susumu`, `Budd, Harold`) are automatically inverted to `First Last` (`Susumu Yokota`, `Harold Budd`) to prevent fragmented artist cards.
+4. **Interactive Ambiguity Fallback:** If an incoming album has completely blank or unidentifiable tags, the script prompts the user (`[1-6]`) rather than silently defaulting to Rock.
+
 * **Electronic**
   - `Electronic; Techno`
   - `Electronic; House`
