@@ -4,6 +4,8 @@
 
 It permanently eliminates messy tags, rogue artist cards, unorganized folders, and low-quality duplicates by enforcing strict taxonomy, audio encoding standards, and directory structures.
 
+👉 **[Interactive Master Process Architecture Diagram & Code Guide (`process_architecture.html`)](process_architecture.html)** — *Clickable end-to-end visual process map with interactive code breakdowns and live tag classifier sandbox.*
+
 ---
 
 ## ✨ Features

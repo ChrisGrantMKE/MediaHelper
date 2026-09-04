@@ -1,6 +1,8 @@
 # Music Server Library & Metadata Standardization Guide
 
 This document is the master operational manual for managing, ingesting, and maintaining the music library on the Jellyfin media server.
+An interactive visual breakdown is also available:
+👉 **[Interactive Master Process Architecture Diagram (`process_architecture.html`)](process_architecture.html)**
 
 ---
 

@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Music Server Architecture & Ingestion Engine Guide</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card-bg: #161b22;
+      --card-border: #30363d;
+      --accent-blue: #58a6ff;
+      --accent-green: #3fb950;
+      --accent-purple: #bc8cff;
+      --accent-orange: #f0883e;
+      --accent-red: #ff7b72;
+      --text-main: #c9d1d9;
+      --text-muted: #8b949e;
+      --code-bg: #090d13;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .node-card {
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+    }
+    .node-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px var(--hover-glow, rgba(88, 166, 255, 0.3));
+    }
+    .connector-line {
+      position: relative;
+    }
+    .connector-line::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      right: -1.25rem;
+      width: 1.25rem;
+      height: 2px;
+      background: #30363d;
+    }
+    pre code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+    .tab-btn.active {
+      border-bottom: 2px solid #58a6ff;
+      color: #58a6ff;
+      font-weight: 600;
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+  </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+  <!-- TOP HEADER -->
+  <header class="max-w-7xl mx-auto mb-10 pb-6 border-b border-[#30363d] flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div>
+      <div class="flex items-center gap-3">
+        <span class="p-2.5 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xl font-bold">🎵</span>
+        <div>
+          <h1 class="text-2xl md:text-3xl font-bold text-white tracking-tight">Music Standardization & Ingestion System</h1>
+          <p class="text-sm text-[#8b949e] mt-0.5">Interactive Master Process Diagram, Algorithm Specifications & Code Reference</p>
+        </div>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-400 border border-green-500/20">
+        <span class="w-2 h-2 rounded-full bg-green-400 mr-2 animate-pulse"></span> Production Pipeline Active
+      </span>
+      <a href="#interactive-tester" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#21262d] hover:bg-[#30363d] text-white border border-[#30363d] transition">
+        🧪 Test Classifier
+      </a>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto space-y-12">
+
+    <!-- FRONT PAGE: INTERACTIVE PROCESS FLOW DIAGRAM -->
+    <section class="bg-[#161b22] border border-[#30363d] rounded-2xl p-6 md:p-8 shadow-xl">
+      <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 pb-4 border-b border-[#30363d]/60 gap-2">
+        <div>
+          <h2 class="text-xl font-bold text-white flex items-center gap-2">
+            <span>🗺️</span> End-to-End System Process Diagram
+          </h2>
+          <p class="text-sm text-[#8b949e]">Click on any node in the pipeline below to jump directly to its logic breakdown and source code.</p>
+        </div>
+        <div class="text-xs text-[#8b949e] italic flex items-center gap-1">
+          <span>💡</span> Interactive: Click cards to inspect code
+        </div>
+      </div>
+
+      <!-- PROCESS GRID -->
+      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+
+        <!-- STEP 1: DROPZONE -->
+        <a href="#sec-staging" style="--hover-glow: rgba(88, 166, 255, 0.4);" class="node-card block bg-[#0d1117] border border-[#30363d] hover:border-blue-500/60 rounded-xl p-5 relative overflow-hidden group">
+          <div class="absolute top-0 left-0 right-0 h-1 bg-blue-500"></div>
+          <div class="flex items-center justify-between text-xs text-[#8b949e] mb-2 font-mono">
+            <span>STEP 01</span>
+            <span class="text-blue-400 font-bold group-hover:translate-x-0.5 transition-transform">Inspect →</span>
+          </div>
+          <h3 class="text-white font-bold text-base mb-1.5 flex items-center gap-2">
+            <span>📥</span> Staging Dropzone
+          </h3>
+          <p class="text-xs text-[#8b949e] leading-relaxed">
+            Monitors <code class="text-blue-300">_INCOMING</code> for audio files, albums, artwork, and cues.
+          </p>
+          <div class="mt-4 pt-3 border-t border-[#21262d] flex flex-wrap gap-1.5">
+            <span class="text-[10px] px-2 py-0.5 rounded bg-blue-900/30 text-blue-300 border border-blue-700/30">Auto-Scan</span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-blue-900/30 text-blue-300 border border-blue-700/30">Recursive</span>
+          </div>
+        </a>
+
+        <!-- STEP 2: CONVERTER -->
+        <a href="#sec-transcode" style="--hover-glow: rgba(188, 140, 255, 0.4);" class="node-card block bg-[#0d1117] border border-[#30363d] hover:border-purple-500/60 rounded-xl p-5 relative overflow-hidden group">
+          <div class="absolute top-0 left-0 right-0 h-1 bg-purple-500"></div>
+          <div class="flex items-center justify-between text-xs text-[#8b949e] mb-2 font-mono">
+            <span>STEP 02</span>
+            <span class="text-purple-400 font-bold group-hover:translate-x-0.5 transition-transform">Inspect →</span>
+          </div>
+          <h3 class="text-white font-bold text-base mb-1.5 flex items-center gap-2">
+            <span>⚡</span> Lossless Transcoding
+          </h3>
+          <p class="text-xs text-[#8b949e] leading-relaxed">
+            Converts FLAC, WAV, M4A, OGG to pristine 320 kbps MP3 via FFmpeg with 100% tag preservation.
+          </p>
+          <div class="mt-4 pt-3 border-t border-[#21262d] flex flex-wrap gap-1.5">
+            <span class="text-[10px] px-2 py-0.5 rounded bg-purple-900/30 text-purple-300 border border-purple-700/30">320k MP3</span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-purple-900/30 text-purple-300 border border-purple-700/30">libmp3lame</span>
+          </div>
+        </a>
+
+        <!-- STEP 3: METADATA & ACRO-CLEANER -->
+        <a href="#sec-artist-cleaning" style="--hover-glow: rgba(63, 185, 80, 0.4);" class="node-card block bg-[#0d1117] border border-[#30363d] hover:border-green-500/60 rounded-xl p-5 relative overflow-hidden group">
+          <div class="absolute top-0 left-0 right-0 h-1 bg-green-500"></div>
+          <div class="flex items-center justify-between text-xs text-[#8b949e] mb-2 font-mono">
+            <span>STEP 03</span>
+            <span class="text-green-400 font-bold group-hover:translate-x-0.5 transition-transform">Inspect →</span>
+          </div>
+          <h3 class="text-white font-bold text-base mb-1.5 flex items-center gap-2">
+            <span>🏷️</span> Artist & Casing Engine
+          </h3>
+          <p class="text-xs text-[#8b949e] leading-relaxed">
+            Smart acronym recognition (<code class="text-green-300">RS</code>, <code class="text-green-300">DJ</code>, <code class="text-green-300">BT</code>) and automatic <code class="text-green-300">Last, First</code> inversion.
+          </p>
+          <div class="mt-4 pt-3 border-t border-[#21262d] flex flex-wrap gap-1.5">
+            <span class="text-[10px] px-2 py-0.5 rounded bg-green-900/30 text-green-300 border border-green-700/30">Acronym-Safe</span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-green-900/30 text-green-300 border border-green-700/30">Name Invert</span>
+          </div>
+        </a>
+
+        <!-- STEP 4: 4-LAYER AMBIENT CLASSIFIER -->
+        <a href="#sec-genre-classifier" style="--hover-glow: rgba(240, 136, 62, 0.4);" class="node-card block bg-[#0d1117] border border-[#30363d] hover:border-orange-500/60 rounded-xl p-5 relative overflow-hidden group">
+          <div class="absolute top-0 left-0 right-0 h-1 bg-orange-500"></div>
+          <div class="flex items-center justify-between text-xs text-[#8b949e] mb-2 font-mono">
+            <span>STEP 04</span>
+            <span class="text-orange-400 font-bold group-hover:translate-x-0.5 transition-transform">Inspect →</span>
+          </div>
+          <h3 class="text-white font-bold text-base mb-1.5 flex items-center gap-2">
+            <span>🌌</span> 4-Layer Genre Classifier
+          </h3>
+          <p class="text-xs text-[#8b949e] leading-relaxed">
+            Keyword Net, Precedence Rules, and known catalogs routing Ambient, Jazz, and Classical.
+          </p>
+          <div class="mt-4 pt-3 border-t border-[#21262d] flex flex-wrap gap-1.5">
+            <span class="text-[10px] px-2 py-0.5 rounded bg-orange-900/30 text-orange-300 border border-orange-700/30">2-Tier Tax</span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-orange-900/30 text-orange-300 border border-orange-700/30">Ambient Net</span>
+          </div>
+        </a>
+
+        <!-- STEP 5: QUALITY & COMPLETENESS -->
+        <a href="#sec-quality-check" style="--hover-glow: rgba(88, 166, 255, 0.4);" class="node-card block bg-[#0d1117] border border-[#30363d] hover:border-blue-500/60 rounded-xl p-5 relative overflow-hidden group">
+          <div class="absolute top-0 left-0 right-0 h-1 bg-blue-500"></div>
+          <div class="flex items-center justify-between text-xs text-[#8b949e] mb-2 font-mono">
+            <span>STEP 05</span>
+            <span class="text-blue-400 font-bold group-hover:translate-x-0.5 transition-transform">Inspect →</span>
+          </div>
+          <h3 class="text-white font-bold text-base mb-1.5 flex items-center gap-2">
+            <span>⚖️</span> Completeness & Quality
+          </h3>
+          <p class="text-xs text-[#8b949e] leading-relaxed">
+            Upgrades existing albums if incoming copy has more tracks (Deluxe) or higher audio bitrate.
+          </p>
+          <div class="mt-4 pt-3 border-t border-[#21262d] flex flex-wrap gap-1.5">
+            <span class="text-[10px] px-2 py-0.5 rounded bg-blue-900/30 text-blue-300 border border-blue-700/30">Bitrate Audit</span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-blue-900/30 text-blue-300 border border-blue-700/30">Track Count</span>
+          </div>
+        </a>
+
+        <!-- STEP 6: ASSET & ARTWORK MIGRATION -->
+        <a href="#sec-assets" style="--hover-glow: rgba(188, 140, 255, 0.4);" class="node-card block bg-[#0d1117] border border-[#30363d] hover:border-purple-500/60 rounded-xl p-5 relative overflow-hidden group">
+          <div class="absolute top-0 left-0 right-0 h-1 bg-purple-500"></div>
+          <div class="flex items-center justify-between text-xs text-[#8b949e] mb-2 font-mono">
+            <span>STEP 06</span>
+            <span class="text-purple-400 font-bold group-hover:translate-x-0.5 transition-transform">Inspect →</span>
+          </div>
+          <h3 class="text-white font-bold text-base mb-1.5 flex items-center gap-2">
+            <span>🖼️</span> Media Asset Migration
+          </h3>
+          <p class="text-xs text-[#8b949e] leading-relaxed">
+            Transfers cover artwork, booklets, and PDFs; removes leftover logs, NFOs, SFVs, and empty folders.
+          </p>
+          <div class="mt-4 pt-3 border-t border-[#21262d] flex flex-wrap gap-1.5">
+            <span class="text-[10px] px-2 py-0.5 rounded bg-purple-900/30 text-purple-300 border border-purple-700/30">Cover Art</span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-purple-900/30 text-purple-300 border border-purple-700/30">Clean Staging</span>
+          </div>
+        </a>
+
+        <!-- STEP 7: LIBRARY ROUTER & TREE -->
+        <a href="#sec-routing" style="--hover-glow: rgba(63, 185, 80, 0.4);" class="node-card block bg-[#0d1117] border border-[#30363d] hover:border-green-500/60 rounded-xl p-5 relative overflow-hidden group">
+          <div class="absolute top-0 left-0 right-0 h-1 bg-green-500"></div>
+          <div class="flex items-center justify-between text-xs text-[#8b949e] mb-2 font-mono">
+            <span>STEP 07</span>
+            <span class="text-green-400 font-bold group-hover:translate-x-0.5 transition-transform">Inspect →</span>
+          </div>
+          <h3 class="text-white font-bold text-base mb-1.5 flex items-center gap-2">
+            <span>📂</span> Library Router & ASCII Tree
+          </h3>
+          <p class="text-xs text-[#8b949e] leading-relaxed">
+            Places into 1 of 6 library buckets and renders clean ASCII folder hierarchy diagram in terminal.
+          </p>
+          <div class="mt-4 pt-3 border-t border-[#21262d] flex flex-wrap gap-1.5">
+            <span class="text-[10px] px-2 py-0.5 rounded bg-green-900/30 text-green-300 border border-green-700/30">6 Libraries</span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-green-900/30 text-green-300 border border-green-700/30">ASCII Diagram</span>
+          </div>
+        </a>
+
+        <!-- STEP 8: DEDUPLICATION ENGINE -->
+        <a href="#sec-dedupe" style="--hover-glow: rgba(240, 136, 62, 0.4);" class="node-card block bg-[#0d1117] border border-[#30363d] hover:border-orange-500/60 rounded-xl p-5 relative overflow-hidden group">
+          <div class="absolute top-0 left-0 right-0 h-1 bg-orange-500"></div>
+          <div class="flex items-center justify-between text-xs text-[#8b949e] mb-2 font-mono">
+            <span>STEP 08</span>
+            <span class="text-orange-400 font-bold group-hover:translate-x-0.5 transition-transform">Inspect →</span>
+          </div>
+          <h3 class="text-white font-bold text-base mb-1.5 flex items-center gap-2">
+            <span>🔄</span> Deduplication Engine
+          </h3>
+          <p class="text-xs text-[#8b949e] leading-relaxed">
+            Merges 'The Band' vs 'Band' and performs 2-step Windows renames to heal casing divergences.
+          </p>
+          <div class="mt-4 pt-3 border-t border-[#21262d] flex flex-wrap gap-1.5">
+            <span class="text-[10px] px-2 py-0.5 rounded bg-orange-900/30 text-orange-300 border border-orange-700/30">2-Step Rename</span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-orange-900/30 text-orange-300 border border-orange-700/30">Self-Healing</span>
+          </div>
+        </a>
+
+        <!-- STEP 9: JELLYFIN DB CLEANER (Full Width / Span) -->
+        <a href="#sec-db-cleaner" style="--hover-glow: rgba(255, 123, 114, 0.4);" class="node-card block md:col-span-3 lg:col-span-4 bg-[#0d1117] border border-[#30363d] hover:border-red-500/60 rounded-xl p-5 relative overflow-hidden group">
+          <div class="absolute top-0 left-0 right-0 h-1 bg-red-500"></div>
+          <div class="flex items-center justify-between text-xs text-[#8b949e] mb-2 font-mono">
+            <span>STEP 09 — DATABASE MAINTENANCE</span>
+            <span class="text-red-400 font-bold group-hover:translate-x-0.5 transition-transform">Inspect SQL & Cleaner Code →</span>
+          </div>
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h3 class="text-white font-bold text-lg mb-1 flex items-center gap-2">
+                <span>🧹</span> Jellyfin SQLite Ghost Record Purge Engine (<code class="text-red-300 text-sm">clean_jellyfin_db.py</code>)
+              </h3>
+              <p class="text-sm text-[#8b949e] leading-relaxed">
+                Connects directly to Jellyfin's SQLite database, creates automatic safety backups, scans <code class="text-red-300">BaseItems</code> for orphaned 0-track cards, purges them permanently, and runs SQLite <code class="text-red-300">VACUUM</code>.
+              </p>
+            </div>
+            <div class="flex flex-wrap md:flex-nowrap gap-2 shrink-0">
+              <span class="text-xs px-3 py-1 rounded bg-red-900/30 text-red-300 border border-red-700/30 flex items-center gap-1.5">
+                <span>🛡️</span> Auto Backup (.bak)
+              </span>
+              <span class="text-xs px-3 py-1 rounded bg-red-900/30 text-red-300 border border-red-700/30 flex items-center gap-1.5">
+                <span>⚡</span> SQLite VACUUM
+              </span>
+            </div>
+          </div>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- INTERACTIVE CLASSIFIER TESTER WIDGET -->
+    <section id="interactive-tester" class="bg-[#161b22] border border-[#30363d] rounded-2xl p-6 md:p-8 shadow-xl">
+      <div class="mb-6 pb-4 border-b border-[#30363d]/60">
+        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+          <span>🧪</span> Live Interactive Tag & Library Classifier Sandbox
+        </h2>
+        <p class="text-sm text-[#8b949e]">Test how the ingestion engine's algorithms parse, normalize, and route any artist, album, or raw genre in real-time.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="space-y-4 md:col-span-1">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8b949e] mb-1.5">Artist Name</label>
+            <input type="text" id="test-artist" value="Yokota, Susumu" placeholder="e.g. Yokota, Susumu, DJ Shadow, RS Tangent" class="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3.5 py-2 text-white text-sm focus:border-blue-500 focus:outline-none transition">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8b949e] mb-1.5">Album Title</label>
+            <input type="text" id="test-album" value="Sakura" placeholder="e.g. Sakura, Oxygen, Melting Days" class="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3.5 py-2 text-white text-sm focus:border-blue-500 focus:outline-none transition">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-[#8b949e] mb-1.5">Raw Genre Tag</label>
+            <input type="text" id="test-genre" value="Electronic, Japanese Ambient, Chillout" placeholder="e.g. Electronic, IDM, field recordings" class="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3.5 py-2 text-white text-sm focus:border-blue-500 focus:outline-none transition">
+          </div>
+          <div class="pt-2 flex flex-wrap gap-2">
+            <button onclick="setTestSample('Yokota, Susumu', 'Sakura', 'Electronic, Japanese Ambient')" class="text-xs px-2.5 py-1 rounded bg-[#21262d] hover:bg-[#30363d] text-[#c9d1d9] border border-[#30363d] transition">Susumu Yokota</button>
+            <button onclick="setTestSample('Lusine', 'Melting Days', '')" class="text-xs px-2.5 py-1 rounded bg-[#21262d] hover:bg-[#30363d] text-[#c9d1d9] border border-[#30363d] transition">Lusine</button>
+            <button onclick="setTestSample('rs tangent', 'When A Worm Wears A Wig', 'breakbeat')" class="text-xs px-2.5 py-1 rounded bg-[#21262d] hover:bg-[#30363d] text-[#c9d1d9] border border-[#30363d] transition">RS Tangent</button>
+            <button onclick="setTestSample('Obscure Artist', 'Forest Sounds', 'field recordings, drone')" class="text-xs px-2.5 py-1 rounded bg-[#21262d] hover:bg-[#30363d] text-[#c9d1d9] border border-[#30363d] transition">Field Recording</button>
+          </div>
+        </div>
+
+        <div class="md:col-span-2 bg-[#0d1117] border border-[#30363d] rounded-xl p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4 pb-2 border-b border-[#21262d]">
+              <span class="text-xs font-semibold text-[#8b949e] uppercase tracking-wider">Computed Engine Result</span>
+              <span class="text-xs text-green-400 font-mono">Status: Ready</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+              <div>
+                <span class="text-xs text-[#8b949e] block mb-1">Standardized Artist Name</span>
+                <div id="res-artist" class="font-bold text-white font-mono text-base bg-[#161b22] px-3 py-2 rounded-lg border border-[#30363d]">Susumu Yokota</div>
+              </div>
+              <div>
+                <span class="text-xs text-[#8b949e] block mb-1">Normalized 2-Tier Genre Tag</span>
+                <div id="res-genre" class="font-bold text-orange-400 font-mono text-base bg-[#161b22] px-3 py-2 rounded-lg border border-[#30363d]">Ambient; Atmospheric</div>
+              </div>
+              <div class="sm:col-span-2">
+                <span class="text-xs text-[#8b949e] block mb-1">Destination Library Folder</span>
+                <div id="res-lib" class="font-bold text-blue-400 font-mono text-base bg-[#161b22] px-3 py-2 rounded-lg border border-[#30363d]">Ambient Classical & Jazz</div>
+              </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-[#21262d]">
+              <span class="text-xs text-[#8b949e] block mb-1">Engine Path Construction</span>
+              <div id="res-path" class="text-xs font-mono text-emerald-400 break-all bg-[#161b22] p-2.5 rounded-lg border border-[#30363d]">
+                \\CHRISGRANTS\files\Media\Music Albums\Ambient Classical & Jazz\Susumu Yokota\Sakura\
+              </div>
+            </div>
+          </div>
+
+          <div id="res-rule-fired" class="mt-4 text-xs text-[#8b949e] bg-blue-950/20 border border-blue-800/30 p-2.5 rounded-lg">
+            ⚡ <span class="text-blue-300 font-semibold">Rule Applied:</span> <span id="res-explanation">Inverted 'Last, First' Japanese name pattern + Applied Ambient Keyword Net.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DEEP-DIVE SECTIONS: LOGIC & CODE BREAKDOWN -->
+    <div class="space-y-12">
+
+      <!-- SECTION 1: INGESTION PIPELINE OVERVIEW -->
+      <section id="sec-staging" class="bg-[#161b22] border border-[#30363d] rounded-2xl p-6 md:p-8">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="px-2.5 py-1 rounded bg-blue-500/20 text-blue-400 text-xs font-mono font-bold">MODULE 01</span>
+          <h2 class="text-xl font-bold text-white">Staging Dropzone & Intake Architecture</h2>
+        </div>
+        <p class="text-sm text-[#8b949e] leading-relaxed mb-6">
+          The ingestion engine monitors a single dropzone at <code class="text-blue-300">\\CHRISGRANTS\files\Media\Music Albums\_INCOMING</code>. When music is placed into this directory, <code class="text-blue-300">INGEST_NEW_MUSIC.bat</code> triggers the automated pipeline.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-[#0d1117] border border-[#30363d] rounded-xl p-5">
+            <h3 class="text-sm font-semibold text-white mb-2 flex items-center gap-2">
+              <span>📋</span> Key Responsibilities
+            </h3>
+            <ul class="text-xs text-[#8b949e] space-y-2 list-disc list-inside">
+              <li>Scans all subdirectories and loose files inside <code class="text-blue-300">_INCOMING</code>.</li>
+              <li>Groups individual tracks into album bundles by parent folder path.</li>
+              <li>Prunes all non-playable clutter (<code class="text-red-300">.nfo</code>, <code class="text-red-300">.sfv</code>, <code class="text-red-300">.cue</code>, <code class="text-red-300">.log</code>, <code class="text-red-300">.m3u</code>).</li>
+              <li>Guarantees <code class="text-blue-300">_INCOMING</code> is completely clean and empty after every run.</li>
+            </ul>
+          </div>
+
+          <div class="bg-[#0d1117] border border-[#30363d] rounded-xl p-5">
+            <h3 class="text-sm font-semibold text-white mb-2 flex items-center gap-2">
+              <span>🚀</span> Execution Trigger
+            </h3>
+            <p class="text-xs text-[#8b949e] mb-3">Launch via one-click batch or terminal:</p>
+            <pre class="bg-[#090d13] p-3 rounded-lg border border-[#21262d] text-xs text-blue-300 overflow-x-auto"><code># Windows Batch Launcher:
+\\CHRISGRANTS\files\Media\Music Albums\INGEST_NEW_MUSIC.bat
+
+# PowerShell Execution:
+python "\\CHRISGRANTS\files\Media\Music Albums\ingest_new_music.py"</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 2: TRANSCODING ENGINE -->
+      <section id="sec-transcode" class="bg-[#161b22] border border-[#30363d] rounded-2xl p-6 md:p-8">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="px-2.5 py-1 rounded bg-purple-500/20 text-purple-400 text-xs font-mono font-bold">MODULE 02</span>
+          <h2 class="text-xl font-bold text-white">Lossless Transcoding Engine (FFmpeg)</h2>
+        </div>
+        <p class="text-sm text-[#8b949e] leading-relaxed mb-6">
+          Standardizes all incoming lossless (<code class="text-purple-300">.flac</code>, <code class="text-purple-300">.wav</code>, <code class="text-purple-300">.aiff</code>, <code class="text-purple-300">.ape</code>) and container formats (<code class="text-purple-300">.m4a</code>, <code class="text-purple-300">.ogg</code>) into high-fidelity 320 kbps constant bitrate MP3s.
+        </p>
+
+        <div class="bg-[#0d1117] border border-[#30363d] rounded-xl p-5">
+          <h3 class="text-xs font-semibold text-[#8b949e] uppercase tracking-wider mb-3">FFmpeg Transcoding Pipeline Code</h3>
+          <pre class="bg-[#090d13] p-4 rounded-lg border border-[#21262d] text-xs text-[#c9d1d9] overflow-x-auto font-mono"><code>def convert_to_320_mp3(src_filepath):
+    ext = os.path.splitext(src_filepath)[1].lower()
+    if ext == '.mp3': return src_filepath
+
+    tags = read_and_clean_tags(src_filepath)
+    out_mp3_path = f"{os.path.splitext(src_filepath)[0]}.mp3"
+
+    cmd = [
+        "ffmpeg", "-y", "-loglevel", "error",
+        "-i", src_filepath,
+        "-vn",
+        "-c:a", "libmp3lame",
+        "-b:a", "320k",
+        "-ac", "2",
+        out_mp3_path
+    ]
+    subprocess.run(cmd, check=True)
+    write_tags(out_mp3_path, tags) # 100% tag preservation
+    os.remove(src_filepath)        # Clean original source
+    return out_mp3_path</code></pre>
+        </div>
+      </section>
+
+      <!-- SECTION 3: ARTIST CASING & NAME INVERSION -->
+      <section id="sec-artist-cleaning" class="bg-[#161b22] border border-[#30363d] rounded-2xl p-6 md:p-8">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="px-2.5 py-1 rounded bg-green-500/20 text-green-400 text-xs font-mono font-bold">MODULE 03</span>
+          <h2 class="text-xl font-bold text-white">Acronym-Aware Casing & Name Inversion Engine</h2>
+        </div>
+        <p class="text-sm text-[#8b949e] leading-relaxed mb-6">
+          Guarantees that artist names retain standard Title Casing while automatically preserving acronyms without requiring manual dictionary entries.
+        </p>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-[#0d1117] border border-[#30363d] rounded-xl p-5">
+            <h3 class="text-sm font-semibold text-green-400 mb-3 flex items-center gap-2">
+              <span>🧠</span> Algorithmic Rules
+            </h3>
+            <ul class="text-xs text-[#8b949e] space-y-2.5">
+              <li><strong class="text-white">Smart Acronym Preservation:</strong> Any uppercase word between 2 and 5 characters (<code class="text-green-300">RS</code>, <code class="text-green-300">DJ</code>, <code class="text-green-300">MC</code>, <code class="text-green-300">BT</code>, <code class="text-green-300">DVA</code>, <code class="text-green-300">XL</code>, <code class="text-green-300">FX</code>, <code class="text-green-300">MF</code>) is preserved as uppercase.</li>
+              <li><strong class="text-white">Non-Vowel 2-Letter Rule:</strong> Two-letter consonant pairs (<code class="text-green-300">dj</code>, <code class="text-green-300">mc</code>, <code class="text-green-300">rs</code>, <code class="text-green-300">tv</code>, <code class="text-green-300">uk</code>) automatically uppercase to <code class="text-green-300">DJ</code>, <code class="text-green-300">MC</code>, <code class="text-green-300">RS</code>.</li>
+              <li><strong class="text-white">Last, First Inversion:</strong> Automatically matches <code class="text-green-300">^([A-Z][a-z]+),\s+([A-Z][a-z]+)$</code> and inverts to <code class="text-green-300">First Last</code> (e.g. <code class="text-green-300">Yokota, Susumu</code> $\rightarrow$ <code class="text-green-300">Susumu Yokota</code>).</li>
+              <li><strong class="text-white">Honorifics Guard:</strong> <code class="text-green-300">Mr</code>, <code class="text-green-300">Ms</code>, <code class="text-green-300">Dr</code>, <code class="text-green-300">St</code>, <code class="text-green-300">Vs</code> are capitalized rather than all-capped.</li>
+            </ul>
+          </div>
+
+          <div class="bg-[#0d1117] border border-[#30363d] rounded-xl p-5">
+            <h3 class="text-xs font-semibold text-[#8b949e] uppercase tracking-wider mb-3">Casing Algorithm Implementation</h3>
+            <pre class="bg-[#090d13] p-4 rounded-lg border border-[#21262d] text-xs text-[#c9d1d9] overflow-x-auto font-mono"><code>def to_standard_title_case(name_str):
+    minor_words = {'a', 'an', 'and', 'as', 'at', 'but', 'by', 'for', 'in', 'of', 'on', 'or', 'the', 'to', 'with', 'vs'}
+    honorifics = {'mr', 'ms', 'dr', 'st', 'jr', 'sr', 'vs'}
+    words = name_str.split(' ')
+    title_words = []
+
+    for idx, w in enumerate(words):
+        w_lower = w.lower()
+        if w_lower in honorifics:
+            title_words.append(w.capitalize())
+        elif w_lower in minor_words:
+            title_words.append(w.capitalize() if idx == 0 else w_lower)
+        elif len(w) == 2 and not any(v in w_lower for v in 'aeiouy'):
+            title_words.append(w.upper()) # Acronym e.g. 'DJ', 'RS'
+        elif w.isupper() and 2 <= len(w) <= 5:
+            title_words.append(w)         # Preserve acronyms e.g. 'DVA', 'MDFMK'
+        else:
+            title_words.append(w.capitalize())
+
+    return ' '.join(title_words)</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 4: 4-LAYER AMBIENT CLASSIFIER -->
+      <section id="sec-genre-classifier" class="bg-[#161b22] border border-[#30363d] rounded-2xl p-6 md:p-8">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="px-2.5 py-1 rounded bg-orange-500/20 text-orange-400 text-xs font-mono font-bold">MODULE 04</span>
+          <h2 class="text-xl font-bold text-white">4-Layer Ambient & 2-Tier Genre Classifier</h2>
+        </div>
+        <p class="text-sm text-[#8b949e] leading-relaxed mb-6">
+          Resolves the historical issue where ambient music was cataloged as generic electronic by implementing a 4-layer taxonomy engine with ambient precedence.
+        </p>
+
+        <div class="bg-[#0d1117] border border-[#30363d] rounded-xl p-5 mb-6">
+          <h3 class="text-sm font-semibold text-orange-400 mb-3 flex items-center gap-2">
+            <span>🛡️</span> The 4 Classification Layers
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+            <div class="bg-[#161b22] p-3.5 rounded-lg border border-[#30363d]">
+              <span class="text-orange-400 font-bold block mb-1">Layer 1: Known Artists</span>
+              <p class="text-[#8b949e]">Fast-path routing for premier ambient creators (Eno, Yokota, Budd, Lusine, Stars of the Lid, Basinski, etc.).</p>
+            </div>
+            <div class="bg-[#161b22] p-3.5 rounded-lg border border-[#30363d]">
+              <span class="text-orange-400 font-bold block mb-1">Layer 2: Keyword Net</span>
+              <p class="text-[#8b949e]">Scans genre, album, and path for <code class="text-orange-300">chillout</code>, <code class="text-orange-300">drone</code>, <code class="text-orange-300">soundscape</code>, <code class="text-orange-300">modular</code>, <code class="text-orange-300">field recordings</code>, etc.</p>
+            </div>
+            <div class="bg-[#161b22] p-3.5 rounded-lg border border-[#30363d]">
+              <span class="text-orange-400 font-bold block mb-1">Layer 3: Precedence</span>
+              <p class="text-[#8b949e]">Specific subgenres always beat generic parent buckets (<code class="text-orange-300">Ambient</code> beats <code class="text-orange-300">Electronic</code>).</p>
+            </div>
+            <div class="bg-[#161b22] p-3.5 rounded-lg border border-[#30363d]">
+              <span class="text-orange-400 font-bold block mb-1">Layer 4: CLI Fallback</span>
+              <p class="text-[#8b949e]">Prompts you [1-6] for ambiguous/untagged releases instead of silently guessing wrong.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-[#0d1117] border border-[#30363d] rounded-xl p-5">
+          <h3 class="text-xs font-semibold text-[#8b949e] uppercase tracking-wider mb-3">Classifier Implementation Snippet</h3>
+          <pre class="bg-[#090d13] p-4 rounded-lg border border-[#21262d] text-xs text-[#c9d1d9] overflow-x-auto font-mono"><code>def map_genre(genre_str, artist=None, album=None, filepath=None):
+    # Layer 1: Check known artist catalog
+    if artist:
+        a_lower = strip_accents(artist).lower().strip()
+        if a_lower in KNOWN_AMBIENT_ARTISTS:
+            return "Ambient; Space Ambient" if any(k in a_lower for k in ["space", "tangerine dream", "schulze", "apollo"]) else "Ambient; Atmospheric"
+        if a_lower in KNOWN_JAZZ_ARTISTS: return "Jazz; Fusion"
+        if a_lower in KNOWN_CLASSICAL_ARTISTS: return "Classical; Contemporary Classical"
+
+    # Layer 2: Expanded Keyword Net with Ambient Precedence
+    context = f"{genre_str or ''} {album or ''} {filepath or ''}".lower()
+    for keyword, mapped_2tier in GENRE_MAP.items():
+        if keyword in context:
+            return mapped_2tier # Ambient keywords evaluated first in dict order
+
+    return None # Triggers interactive prompt rather than silent wrong guess</code></pre>
+        </div>
+      </section>
+
+      <!-- SECTION 5: QUALITY & COMPLETENESS -->
+      <section id="sec-quality-check" class="bg-[#161b22] border border-[#30363d] rounded-2xl p-6 md:p-8">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="px-2.5 py-1 rounded bg-blue-500/20 text-blue-400 text-xs font-mono font-bold">MODULE 05</span>
+          <h2 class="text-xl font-bold text-white">Completeness & Quality Upgrade Evaluator</h2>
+        </div>
+        <p class="text-sm text-[#8b949e] leading-relaxed mb-6">
+          When an album being ingested already exists in the destination library, the engine compares track counts and bitrates to determine whether to upgrade.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-[#0d1117] border border-[#30363d] rounded-xl p-5">
+            <h3 class="text-sm font-semibold text-blue-400 mb-2">Rule 1: Track Completeness</h3>
+            <p class="text-xs text-[#8b949e] leading-relaxed">
+              If incoming release contains <strong class="text-white">more tracks</strong> (e.g. Deluxe Edition, Bonus Tracks, Complete Release vs Partial Rip), it automatically replaces the existing incomplete version.
+            </p>
+          </div>
+          <div class="bg-[#0d1117] border border-[#30363d] rounded-xl p-5">
+            <h3 class="text-sm font-semibold text-blue-400 mb-2">Rule 2: Bitrate Quality</h3>
+            <p class="text-xs text-[#8b949e] leading-relaxed">
+              If track counts match, it audits audio bitrates. A <strong class="text-white">320 kbps MP3</strong> will upgrade and replace older 128k, 192k, or 256k rips on the server.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 6: ASSET MIGRATION -->
+      <section id="sec-assets" class="bg-[#161b22] border border-[#30363d] rounded-2xl p-6 md:p-8">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="px-2.5 py-1 rounded bg-purple-500/20 text-purple-400 text-xs font-mono font-bold">MODULE 06</span>
+          <h2 class="text-xl font-bold text-white">Media Asset Migration & Clean Staging</h2>
+        </div>
+        <p class="text-sm text-[#8b949e] leading-relaxed mb-6">
+          Ensures cover art and booklet PDFs follow the audio files to their destination album folder, while deleting junk files and pruning empty directories.
+        </p>
+
+        <div class="bg-[#0d1117] border border-[#30363d] rounded-xl p-5">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div>
+              <span class="text-purple-400 font-bold block mb-1">Preserved Artwork Extensions</span>
+              <code class="text-[#c9d1d9] bg-[#090d13] px-2 py-1 rounded block border border-[#21262d]">.jpg, .jpeg, .png, .webp, .gif, .pdf</code>
+            </div>
+            <div>
+              <span class="text-red-400 font-bold block mb-1">Pruned Non-Audio Junk</span>
+              <code class="text-[#c9d1d9] bg-[#090d13] px-2 py-1 rounded block border border-[#21262d]">.nfo, .txt, .m3u, .m3u8, .sfv, .cue, .url, .log</code>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 7: ROUTING & ASCII TREE -->
+      <section id="sec-routing" class="bg-[#161b22] border border-[#30363d] rounded-2xl p-6 md:p-8">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="px-2.5 py-1 rounded bg-green-500/20 text-green-400 text-xs font-mono font-bold">MODULE 07</span>
+          <h2 class="text-xl font-bold text-white">Library Routing & ASCII Tree Visualizer</h2>
+        </div>
+        <p class="text-sm text-[#8b949e] leading-relaxed mb-6">
+          Routes all music into 6 segregated library folders. After every ingested album or track, renders an ASCII tree in the terminal confirming exact placement.
+        </p>
+
+        <div class="bg-[#0d1117] border border-[#30363d] rounded-xl p-5">
+          <h3 class="text-xs font-semibold text-[#8b949e] uppercase tracking-wider mb-2">Sample Terminal ASCII Output</h3>
+          <pre class="bg-[#090d13] p-4 rounded-lg border border-[#21262d] text-xs text-green-400 font-mono overflow-x-auto"><code>Music Albums/
+└── Ambient Classical & Jazz/
+    └── Susumu Yokota/
+        └── Sakura/
+            ├── 01 - Saku.mp3
+            ├── 02 - Tobiume.mp3
+            ├── 03 - Yakaragawa.mp3
+            └── cover.jpg</code></pre>
+        </div>
+      </section>
+
+      <!-- SECTION 8: DEDUPLICATION ENGINE -->
+      <section id="sec-dedupe" class="bg-[#161b22] border border-[#30363d] rounded-2xl p-6 md:p-8">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="px-2.5 py-1 rounded bg-orange-500/20 text-orange-400 text-xs font-mono font-bold">MODULE 08</span>
+          <h2 class="text-xl font-bold text-white">Deduplication Engine (<code class="text-orange-300">unify_and_deduplicate_artists.py</code>)</h2>
+        </div>
+        <p class="text-sm text-[#8b949e] leading-relaxed mb-6">
+          Scans all 6 libraries to detect duplicate folders, leading article variations (<code class="text-orange-300">The Misfits</code> $\rightarrow$ <code class="text-orange-300">Misfits</code>), foreign script aliases (<code class="text-orange-300">מזמור</code> $\rightarrow$ <code class="text-orange-300">Mizmor</code>), and runs 2-step Windows renames.
+        </p>
+
+        <div class="bg-[#0d1117] border border-[#30363d] rounded-xl p-5">
+          <h3 class="text-xs font-semibold text-[#8b949e] uppercase tracking-wider mb-3">Two-Step Temporary Rename Implementation</h3>
+          <pre class="bg-[#090d13] p-4 rounded-lg border border-[#21262d] text-xs text-[#c9d1d9] overflow-x-auto font-mono"><code>def two_step_rename(parent_dir, current_name, desired_name):
+    cur_p = os.path.join(parent_dir, current_name)
+    des_p = os.path.join(parent_dir, desired_name)
+    temp_p = os.path.join(parent_dir, f"__temp_unify_{re.sub(r'[^a-zA-Z0-9]', '', desired_name)}__")
+
+    if not os.path.exists(cur_p): return
+    for r, d, fs in os.walk(cur_p):
+        for f in fs:
+            if f.lower().endswith(('.mp3', '.flac', '.m4a')):
+                update_tags(os.path.join(r, f), desired_name)
+
+    if cur_p == des_p: return
+
+    # Overcomes Windows case-insensitivity barrier
+    os.rename(cur_p, temp_p)
+    os.rename(temp_p, des_p)</code></pre>
+        </div>
+      </section>
+
+      <!-- SECTION 9: DATABASE CLEANER -->
+      <section id="sec-db-cleaner" class="bg-[#161b22] border border-[#30363d] rounded-2xl p-6 md:p-8">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="px-2.5 py-1 rounded bg-red-500/20 text-red-400 text-xs font-mono font-bold">MODULE 09</span>
+          <h2 class="text-xl font-bold text-white">Jellyfin SQLite Ghost Record Purge Engine (<code class="text-red-300">clean_jellyfin_db.py</code>)</h2>
+        </div>
+        <p class="text-sm text-[#8b949e] leading-relaxed mb-6">
+          Explains why Jellyfin retains global artist cards even after folders are merged, and how the SQLite cleaner removes all 0-song ghost records.
+        </p>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-[#0d1117] border border-[#30363d] rounded-xl p-5">
+            <h3 class="text-sm font-semibold text-red-400 mb-3 flex items-center gap-2">
+              <span>⚠️</span> Why Jellyfin Retains Ghosts
+            </h3>
+            <p class="text-xs text-[#8b949e] leading-relaxed mb-3">
+              In Jellyfin, <code class="text-red-300">MusicArtist</code> entities are stored in a global server-wide table (<code class="text-red-300">BaseItems</code>) that is independent of individual library folders.
+            </p>
+            <p class="text-xs text-[#8b949e] leading-relaxed">
+              When audio files on disk are renamed or moved, Jellyfin links the songs to the new artist card, but <strong>never deletes the old artist record from the database</strong>. Removing and re-adding libraries does not clear them.
+            </p>
+          </div>
+
+          <div class="bg-[#0d1117] border border-[#30363d] rounded-xl p-5">
+            <h3 class="text-xs font-semibold text-[#8b949e] uppercase tracking-wider mb-3">Database Purge Query</h3>
+            <pre class="bg-[#090d13] p-4 rounded-lg border border-[#21262d] text-xs text-[#c9d1d9] overflow-x-auto font-mono"><code># 1. Scans BaseItems for all active audio tracks
+cur.execute("SELECT DISTINCT Artists, AlbumArtists FROM BaseItems WHERE type LIKE '%Audio%';")
+
+# 2. Deletes any MusicArtist row not linked to active songs
+cur.executemany("DELETE FROM BaseItems WHERE Id = ?", [(g_id,) for g_id in ghost_ids])
+
+# 3. Compacts and optimizes SQLite database
+cur.execute("VACUUM;")</code></pre>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="max-w-7xl mx-auto mt-16 pt-6 border-t border-[#30363d] text-center text-xs text-[#8b949e]">
+    <p>Music Standardization System • Live Server: <code class="text-blue-300">\\CHRISGRANTS\files\Media\Music Albums</code> • GitHub: <a href="https://github.com/ChrisGrantMKE/MediaHelper" target="_blank" class="text-blue-400 hover:underline font-mono">ChrisGrantMKE/MediaHelper</a></p>
+  </footer>
+
+  <!-- INTERACTIVE SANDBOX LOGIC SCRIPT -->
+  <script>
+    const KNOWN_AMBIENT = new Set([
+      "susumu yokota", "lusine", "ludwig a.f. rohrscheid", "ludwig a.f.", "h. takahashi", "david edren",
+      "alabaster deplume", "studio", "brian eno", "harold budd", "stars of the lid", "william basinski",
+      "biosphere", "steve roach", "robert rich", "tim hecker", "fennesz", "loscil", "klaus schulze",
+      "tangerine dream", "chihei hatakeyama", "hiroshi yoshimura"
+    ]);
+
+    function stripAccents(s) {
+      return s ? s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim() : '';
+    }
+
+    function toTitleCase(str) {
+      const minor = new Set(['a', 'an', 'and', 'as', 'at', 'but', 'by', 'for', 'in', 'of', 'on', 'or', 'the', 'to', 'with', 'vs']);
+      const honorifics = new Set(['mr', 'ms', 'dr', 'st', 'jr', 'sr', 'vs']);
+      const words = str.split(/\s+/);
+      return words.map((w, idx) => {
+        const lw = w.toLowerCase();
+        if (honorifics.has(lw)) return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+        if (minor.has(lw)) return idx === 0 ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : lw;
+        if (w.length === 2 && !/[aeiouy]/i.test(w)) return w.toUpperCase();
+        if (w === w.toUpperCase() && w.length >= 2 && w.length <= 5) return w;
+        return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+      }).join(' ');
+    }
+
+    function runClassifier() {
+      let rawArt = document.getElementById('test-artist').value.trim();
+      let rawAlb = document.getElementById('test-album').value.trim();
+      let rawGen = document.getElementById('test-genre').value.trim();
+
+      let ruleExplanation = [];
+
+      // 1. Artist Cleaning & Inversion
+      let art = stripAccents(rawArt);
+      const invMatch = art.match(/^([A-Z][a-zA-Z'\-]+),\s+([A-Z][a-zA-Z'\-]+)$/);
+      if (invMatch) {
+        art = `${invMatch[2]} ${invMatch[1]}`;
+        ruleExplanation.push("Inverted 'Last, First' pattern");
+      }
+      art = toTitleCase(art);
+
+      // 2. Genre & Library
+      let artLower = art.toLowerCase();
+      let context = `${rawGen} ${rawAlb}`.toLowerCase();
+      let resGenre = "Rock; Alternative Rock";
+      let resLib = "Rock & Pop";
+
+      if (KNOWN_AMBIENT.has(artLower) || artLower.includes("brian eno") || artLower.includes("susumu yokota") || artLower.includes("lusine") || artLower.includes("tangerine dream")) {
+        resGenre = (artLower.includes("tangerine dream") || artLower.includes("apollo") || artLower.includes("rohrscheid")) ? "Ambient; Space Ambient" : "Ambient; Atmospheric";
+        resLib = "Ambient Classical & Jazz";
+        ruleExplanation.push("Matched Known Ambient Master Catalog (Layer 1)");
+      } else if (context.includes("chillout") || context.includes("soundscape") || context.includes("drone") || context.includes("field recording") || context.includes("modular") || context.includes("ambient")) {
+        resGenre = "Ambient; Atmospheric";
+        resLib = "Ambient Classical & Jazz";
+        ruleExplanation.push("Matched Ambient Keyword Net (Layer 2)");
+      } else if (context.includes("techno") || context.includes("house") || context.includes("breakbeat") || context.includes("idm") || context.includes("electronic")) {
+        resGenre = "Electronic; IDM";
+        resLib = "Electronic";
+        ruleExplanation.push("Matched Electronic Dance/Club Tag");
+      } else if (context.includes("metal") || context.includes("industrial")) {
+        resGenre = "Rock; Metal";
+        resLib = "Metal Industrial";
+        ruleExplanation.push("Matched Metal / Industrial Tag");
+      } else {
+        ruleExplanation.push("Fallback Generic Tag");
+      }
+
+      document.getElementById('res-artist').innerText = art || "Unknown Artist";
+      document.getElementById('res-genre').innerText = resGenre;
+      document.getElementById('res-lib').innerText = resLib;
+      document.getElementById('res-path').innerText = `\\\\CHRISGRANTS\\files\\Media\\Music Albums\\${resLib}\\${art || "Unknown"}\\${rawAlb || "Album"}\\`;
+      document.getElementById('res-explanation').innerText = ruleExplanation.join(" + ");
+    }
+
+    function setTestSample(art, alb, gen) {
+      document.getElementById('test-artist').value = art;
+      document.getElementById('test-album').value = alb;
+      document.getElementById('test-genre').value = gen;
+      runClassifier();
+    }
+
+    document.getElementById('test-artist').addEventListener('input', runClassifier);
+    document.getElementById('test-album').addEventListener('input', runClassifier);
+    document.getElementById('test-genre').addEventListener('input', runClassifier);
+
+    // Initial run
+    runClassifier();
+  </script>
+</body>
+</html>
