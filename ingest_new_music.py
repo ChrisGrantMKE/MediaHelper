@@ -657,7 +657,14 @@ def main():
     for root, dirs, files in os.walk(INCOMING_DIR):
         for f in files:
             if f.lower().endswith(('.mp3', '.flac', '.m4a', '.ogg', '.wav', '.aiff', '.ape')):
-                raw_incoming.append(os.path.join(root, f))
+                fp = os.path.join(root, f)
+                try:
+                    if os.path.getsize(fp) == 0:
+                        print(f"    [!] Skipping & removing corrupt 0-byte file: {f}")
+                        os.remove(fp)
+                        continue
+                except: pass
+                raw_incoming.append(fp)
 
     if not raw_incoming:
         clean_entire_incoming_directory()
