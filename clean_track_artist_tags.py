@@ -72,20 +72,27 @@ def resolve_clean_artist(filepath, current_artist, current_albumartist, current_
     if "septet in e-flat major" in full_text or "beethoven" in full_text:
         return "Ludwig van Beethoven", "Identified classical composer from work title"
 
-    # 4. Check for artist in title or filename with ' - ' separator
+    # 4. Check for artist in bracketed compilation pattern e.g. 'Various Artists - (08) [Delphic] Counterpoint'
+    m_brack_art = re.search(r'\[([^\]]+)\]\s*(.+)', fname)
+    if m_brack_art:
+        cand_art = m_brack_art.group(1).strip()
+        if cand_art and not is_bad_artist(cand_art) and len(cand_art) > 1:
+            return cand_art, f"Extracted artist '{cand_art}' from filename brackets"
+
+    # 5. Check for artist in title or filename with ' - ' separator
     for source in [fname, current_title]:
         if source and ' - ' in source:
             parts = source.split(' - ')
             cand_left = parts[0].strip()
             cand_clean = re.sub(r'^\d+[\s\.\-_]+', '', cand_left)
             cand_clean = re.sub(r'^[a-d]\d*[\s\.\-_]+', '', cand_clean, flags=re.IGNORECASE).strip()
-            if cand_clean and not is_bad_artist(cand_clean) and len(cand_clean) > 2:
+            if cand_clean and not is_bad_artist(cand_clean) and len(cand_clean) > 2 and cand_clean.lower() != "various artists":
                 return cand_clean, f"Extracted artist '{cand_clean}' from '{source}'"
 
-    # 5. Check parent / grandparent directories if not generic
+    # 6. Check parent / grandparent directories if not generic
     for folder in [grandparent_dir, parent_dir]:
         folder_lower = folder.lower()
-        if folder_lower not in ("compilations", "soundtracks", "soundtracks & holiday", "ambient rarities", "[notag]"):
+        if folder_lower not in ("compilations", "soundtracks", "soundtracks & holiday", "ambient rarities", "electronic rarities", "industrial rarities", "soundtracks rarities", "[notag]"):
             f_clean = re.sub(r'^\[[^\]]+\]\s*', '', folder)
             # If folder is 'Halo III' inside 'Soundtracks & Holiday', artist is 'Halo'
             if 'halo' in folder_lower:
@@ -97,11 +104,12 @@ def resolve_clean_artist(filepath, current_artist, current_albumartist, current_
             elif f_clean and not is_bad_artist(f_clean):
                 return f_clean, f"Inherited artist from directory name '{folder}'"
 
-    # 6. Fallback to AlbumArtist if valid
+    # 7. Fallback to AlbumArtist if valid and not a compilation
     if current_albumartist and not is_bad_artist(current_albumartist):
-        return current_albumartist, "Inherited valid AlbumArtist tag"
+        if current_albumartist.lower() not in ("various artists", "various") or "compilations" in filepath.lower():
+            return current_albumartist, "Inherited valid AlbumArtist tag"
 
-    # 7. Safe Default
+    # 8. Safe Default
     return "Various Artists", "Defaulted to Various Artists"
 
 def read_tags_safe(filepath):
