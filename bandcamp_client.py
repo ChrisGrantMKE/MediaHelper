@@ -7,6 +7,8 @@ import html
 import unicodedata
 import datetime
 
+import difflib
+
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
 def slugify(text):
@@ -34,6 +36,19 @@ def normalize_title(title):
     title = re.sub(r'\b(19\d\d|20\d\d)\b', '', title)
     title = re.sub(r'[\(\)\[\]\{\}\-_:;!?,."\']', '', title)
     return title.strip().lower()
+
+def is_album_match(t1, t2):
+    n1 = normalize_title(t1)
+    n2 = normalize_title(t2)
+    if not n1 or not n2:
+        return False
+    if n1 == n2:
+        return True
+    special = {'ii', 'iii', 'iv', '2', '3', 'live', 'remix', 'remixes', 'deluxe', 'instrumental', 'dub', 'acoustic', 'part', 'ep'}
+    w1, w2 = set(n1.split()), set(n2.split())
+    if (w1 - w2) & special or (w2 - w1) & special:
+        return False
+    return difflib.SequenceMatcher(None, n1, n2).ratio() >= 0.92
 
 class BandcampClient:
     def __init__(self, tracker=None):
@@ -207,35 +222,29 @@ class BandcampClient:
         if not discography:
             return {"status": "no_releases_found", "artist": artist_name, "bandcamp_url": base_url, "releases": []}
 
-        owned_titles_norm = {normalize_title(a.get('title', '')) for a in (owned_albums or [])}
-        ignored_titles_norm = {normalize_title(t) for t in (ignored_titles or [])}
-
         new_candidates = []
+        current_year = datetime.datetime.now().year
+
         for release in discography:
             rel_title = release.get("title", "")
-            norm_rel = normalize_title(rel_title)
             rel_year = release.get("year")
 
-            # Skip if already in user's library
-            is_owned = any(norm_rel in owned or owned in norm_rel for owned in owned_titles_norm if owned and norm_rel)
+            # Check if owned in user's library
+            is_owned = any(is_album_match(rel_title, a.get('title', '')) for a in (owned_albums or []))
             if is_owned:
                 continue
 
-            # Skip if explicitly ignored by user
-            is_ignored = any(norm_rel in ign or ign in norm_rel for ign in ignored_titles_norm if ign and norm_rel)
+            # Check if explicitly ignored by user
+            is_ignored = any(is_album_match(rel_title, ign) for ign in (ignored_titles or []))
             if is_ignored:
                 continue
 
             if notify_mode == "newer_only":
-                if latest_owned_year and rel_year:
-                    # Only alert if release year is >= latest owned release year
-                    if rel_year >= latest_owned_year:
-                        new_candidates.append(release)
-                elif not latest_owned_year:
-                    # If we don't know any owned year, include recent releases (last 2 years)
-                    current_year = datetime.datetime.now().year
-                    if rel_year and rel_year >= (current_year - 2):
-                        new_candidates.append(release)
+                # Alert if release year is >= latest owned year, OR within last 2-3 years and unowned!
+                if rel_year and (rel_year >= (latest_owned_year or 0) or rel_year >= (current_year - 2)):
+                    new_candidates.append(release)
+                elif not rel_year:
+                    new_candidates.append(release)
             else:
                 # notify_mode == "all_missing"
                 new_candidates.append(release)
