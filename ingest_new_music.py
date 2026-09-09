@@ -297,12 +297,24 @@ def clean_artist_name(name, target_lib=None):
     if m_inv:
         name_str = f"{m_inv.group(2)} {m_inv.group(1)}"
 
+    # Strip vinyl/catalog brackets (e.g. '[wag 029] Cobblestone Jazz' -> 'Cobblestone Jazz')
+    m_brack = re.match(r'^\[[^\]]+\]\s*(.+)$', name_str)
+    if m_brack:
+        name_str = m_brack.group(1).strip()
+        if ' - ' in name_str:
+            name_str = name_str.split(' - ')[0].strip()
+
+    # Strip track number prefix from artist name (e.g. '205 Pato Banton' -> 'Pato Banton')
+    m_num_prefix = re.match(r'^\d{2,4}\s+([A-Za-z].+)$', name_str)
+    if m_num_prefix:
+        name_str = m_num_prefix.group(1).strip()
+
     norm_lower = re.sub(r'[^\w\s]', '', name_str.lower()).strip()
     if norm_lower in VALID_NUMERIC_BANDS:
         return name_str
 
-    # Accidental pure-number tag (e.g. '03', '12') that is not a valid band
-    if re.match(r'^\d{1,3}$', name_str) or re.match(r'^[A-Za-z]\d{1,2}$', name_str):
+    # Accidental pure-number, movement, or trailing underscore tag (e.g. '03', '05_', '12') that is not a valid band
+    if re.match(r'^\d{1,3}_*$', name_str) or re.match(r'^[A-Za-z]\d{1,2}$', name_str) or re.match(r'^[A-Za-z]$', name_str):
         return "Unknown Artist"
 
     m = re.match(r'^\s*(\d{1,2}|[A-Z]\d{1,2}|\d{1,2}-\d{1,2})[\s\.\-_]+(.+)$', name_str)
@@ -778,8 +790,31 @@ def main():
 
         for filepath in files:
             tags = read_and_clean_tags(filepath)
-            track_artist = clean_artist_name(tags.get('artist') or art, target_lib=target_lib)
+            raw_track_artist = tags.get('artist') or art
+            track_artist = clean_artist_name(raw_track_artist, target_lib=target_lib)
             track_title = strip_accents(tags.get('title') or os.path.splitext(os.path.basename(filepath))[0])
+
+            # If track artist resolved to Unknown Artist or is invalid, deduce from title/filename or fallback to album artist
+            if track_artist == "Unknown Artist" or not track_artist:
+                fname = os.path.splitext(os.path.basename(filepath))[0]
+                full_text = f"{fname} {track_title} {alb}".lower()
+                if "septet in e-flat major" in full_text or "beethoven" in full_text:
+                    track_artist = "Ludwig van Beethoven"
+                elif ' - ' in track_title:
+                    cand = track_title.split(' - ')[0].strip()
+                    cand = re.sub(r'^\d+[\s\.\-_]+', '', cand).strip()
+                    if cand and len(cand) > 2:
+                        track_artist = clean_artist_name(cand, target_lib=target_lib)
+                elif ' - ' in fname:
+                    cand = fname.split(' - ')[0].strip()
+                    cand = re.sub(r'^\d+[\s\.\-_]+', '', cand).strip()
+                    if cand and len(cand) > 2:
+                        track_artist = clean_artist_name(cand, target_lib=target_lib)
+                
+                # Final fallback
+                if track_artist == "Unknown Artist" or not track_artist:
+                    track_artist = album_artist if album_artist != "Various Artists" else "Various Artists"
+
             track_num = tags.get('track')
             track_genre = map_genre(tags.get('genre'), artist=track_artist, album=alb, filepath=filepath) or gen
 

@@ -22,6 +22,7 @@ It permanently eliminates messy tags, rogue artist cards, unorganized folders, a
 - **🖼️ Media Asset & Artwork Migration:** Automatically moves cover art, booklets, and images (`.jpg`, `.jpeg`, `.png`, `.webp`, `.pdf`) into the destination album directory and removes leftover junk (`.nfo`, `.m3u`, `.sfv`, `.cue`, `.log`).
 - **🧹 Guaranteed Clean Staging:** Completely prunes all empty folders and non-audio junk from `_INCOMING` after every successful run.
 - **🔄 Library-Wide Deduplication Engine:** Run `python unify_and_deduplicate_artists.py` anytime to scan all libraries, cluster duplicates, and execute safe two-step Windows folder merges.
+- **🏷️ Track-Level Artist Tag Sanitizer:** Run `python clean_track_artist_tags.py` to audit and repair malformed track artist tags (e.g., movement numbers `01`–`06`, trailing underscores `05_`, bracketed prefixes `[wag 029]`, or placeholder tags) across the catalog.
 - **🧹 Jellyfin Ghost Artist Purge Engine:** Run `sudo python3 clean_jellyfin_db.py` directly on the server to automatically purge orphaned 0-track ghost artist cards left behind in Jellyfin's SQLite database (`jellyfin.db`), complete with automatic pre-run backups.
 
 ---
