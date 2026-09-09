@@ -228,8 +228,9 @@ class WebhookHandler(BaseHTTPRequestHandler):
         event_type = payload.get("NotificationType") or payload.get("event") or ""
         item_type = payload.get("ItemType") or payload.get("item_type") or ""
 
-        # Filter: only process audio items
-        if item_type and "Audio" not in item_type and "Music" not in item_type:
+        # Filter out video/book items (e.g. Movies, TV Episodes)
+        ignored_video_types = ("movie", "episode", "series", "season", "video", "book", "trailer")
+        if item_type and any(v in item_type.lower() for v in ignored_video_types):
             return {"status": "ignored", "reason": f"ItemType '{item_type}' is not audio"}
 
         artist = (
