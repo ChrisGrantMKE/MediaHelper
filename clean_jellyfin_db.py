@@ -35,13 +35,17 @@ cur.execute("PRAGMA table_info(BaseItems);")
 bi_cols = [c[1] for c in cur.fetchall()]
 print(f"BaseItems columns: {bi_cols[:12]}...")
 
-# 2. Get all distinct artist names that are ACTUALLY referenced by audio tracks
+# 2. Get all distinct artist names that are ACTUALLY referenced by individual audio tracks
 print("\nScanning BaseItems for all artists referenced by actual audio tracks...")
+# In Jellyfin:
+# - Individual audio tracks have type = 'MediaBrowser.Controller.Entities.Audio.Audio'
+# - Parent albums or folders have type LIKE '%MusicAlbum%' or '%Folder%'
+# - We filter strictly to individual audio tracks that have audio file paths
 cur.execute("""
-SELECT DISTINCT Artists, AlbumArtists 
+SELECT DISTINCT Artists 
 FROM BaseItems 
-WHERE type = 'MediaBrowser.Controller.Entities.Audio.Audio' 
-   OR type LIKE '%Audio%';
+WHERE type = 'MediaBrowser.Controller.Entities.Audio.Audio'
+  AND (Path LIKE '%.mp3' OR Path LIKE '%.flac' OR Path LIKE '%.ogg' OR Path LIKE '%.m4a' OR Path LIKE '%.wav');
 """)
 audio_rows = cur.fetchall()
 
@@ -49,14 +53,13 @@ active_artist_names = set()
 for r in audio_rows:
     for val in r:
         if val:
-            # Jellyfin stores artists either as plain string, pipe-separated, or JSON list
             val_str = str(val)
             for part in val_str.replace('[', '').replace(']', '').replace('"', '').split('|'):
                 clean = part.strip()
                 if clean:
                     active_artist_names.add(clean)
 
-print(f"Found {len(active_artist_names)} unique active artist names referenced across all audio tracks.")
+print(f"Found {len(active_artist_names)} unique active artist names referenced across individual audio tracks.")
 
 # 3. Find all MusicArtist rows in BaseItems
 cur.execute("""
