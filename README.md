@@ -85,9 +85,10 @@ docker start jellyfin
 The script will automatically back up your database, identify all 0-song ghost records, delete them, and optimize SQLite.
 
 ### 4. Real-Time Bandcamp Release Watcher (Jellyfin Webhook)
-Automatically detects when you listen to **3 songs from any artist in 24 hours**, checks your collection, and queries Bandcamp for newer releases:
+Automatically detects when you listen to **3 songs from any artist in 24 hours**, checks your collection, and queries Bandcamp for newer or unowned releases:
+
 ```bash
-# Start on Linux via systemd:
+# Start on Linux via systemd (runs 24/7 in background):
 sudo systemctl enable --now jellyfin_bandcamp
 
 # Or run interactively:
@@ -102,8 +103,27 @@ python test_integration.py --list-ignored
 python test_integration.py --ignore-artist "Artist Name"
 python test_integration.py --ignore-release "Artist Name" "Album Title"
 ```
-- **Notifications:** Supports mobile push via **ntfy.sh**, **Discord webhooks**, **HTML email**, and local Markdown ([`NEW_RELEASES.md`](NEW_RELEASES.md)).
-- **Interactive Controls:** Tap "Open Bandcamp", "Ignore Release", or "Mute Artist" directly from your phone notifications.
+
+#### ⚙️ Jellyfin Webhook Configuration (Docker Host Networking)
+1. **Restart Jellyfin Docker:** If you just installed the Webhook plugin, restart the container so it initializes: `sudo docker restart jellyfin`.
+2. **Add Destination:** Go to **Dashboard $\rightarrow$ Plugins $\rightarrow$ Webhook**, and click **Add Generic Destination**.
+3. **Webhook URL:** When Jellyfin runs in Docker, `localhost` loops back into the container. Point it to your server host IP:
+   ```text
+   http://192.168.8.241:5055/webhook  (or http://172.17.0.1:5055/webhook)
+   ```
+4. **Events & Types:**
+   - **Notification Type:** Check `Playback Stop` (and/or `Playback Start`).
+   - **Item Type:** Check `Audio` (or select `Songs` and `Albums`).
+   - **Send All Properties:** Check the box ✅.
+
+#### 🧠 Intelligent Matching & Discovery Engine
+- **Suffix & Suffix Protection:** Unlike naive substring matchers, the engine recognizes that `ii`, `2`, `Live`, `Remix`, `Deluxe`, `Dub`, and `Instrumental` represent distinct releases, preventing sequels (e.g. *The Universe Smiles Upon You ii*) from being falsely skipped if you own the original album.
+- **Recent Era Window:** Always checks for unowned releases from the last 2–3 years, so live releases and EPs aren't hidden just because you own an album from the current year.
+- **7-Day Cooldown & Recurring Nudges:** Enforces a 7-day cooldown per artist. After 7 days, if you listen to that artist again, it will nudge you again about new music unless you explicitly muted it.
+- **Interactive Action Buttons (ntfy):** Tappable buttons directly on your phone's push notification card:
+  - `[ Open Bandcamp ]`: Opens the album page directly in your browser.
+  - `[ Ignore Release ]`: Permanently mutes that specific release.
+  - `[ Mute Artist ]`: Permanently mutes that artist from future scans.
 
 ---
 

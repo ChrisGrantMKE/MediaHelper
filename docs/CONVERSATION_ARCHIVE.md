@@ -105,7 +105,11 @@ This document preserves the complete chronological history, technical decisions,
 ### Phase 10: Real-Time Jellyfin Playback Tracker & Bandcamp Release Notifier
 - **Problem:** When listening to music in Jellyfin, there was no automated way to discover if favorite artists have newer or unowned releases on Bandcamp without manual checking.
 - **Solution:** Designed and deployed an event-driven discovery pipeline.
-  - **Jellyfin Webhook Daemon (`jellyfin_listener.py`):** Runs on port 5055 as a Linux systemd service (`jellyfin_bandcamp.service`). Listens for `PlaybackStop` events from Jellyfin's official Webhook plugin.
+  - **Jellyfin Webhook Daemon (`jellyfin_listener.py`):** Runs on port 5055 as a Linux systemd service (`jellyfin_bandcamp.service`). Listens for `PlaybackStop` and `PlaybackStart` events from Jellyfin's official Webhook plugin.
+  - **Docker Container Networking Fix:** When Jellyfin runs in Docker, `localhost:5055` routes internally inside the container. Configured the webhook destination to route to the host via server LAN IP (`http://192.168.8.241:5055/webhook`).
+  - **ItemType Compatibility:** Broadened event filtering to accept `Songs`, `Track`, `Album`, and `MusicAlbum` (while strictly ignoring Video/Movies/TV).
+  - **Substring Match False-Positive Fix:** Upgraded `is_album_match()` to prevent naive substring matches (e.g. owning *The Universe Smiles Upon You* was previously causing *The Universe Smiles Upon You ii* to be falsely marked as already owned). Distinguishing tokens (`ii`, `2`, `Live`, `Remix`, `Deluxe`, `Dub`) are strictly preserved.
+  - **Recent Era Window:** In `newer_only` mode, unowned releases from the last 2–3 years are always evaluated even if the user owns a release from the current calendar year.
   - **SQLite Playback Tracker (`playback_tracker.py`):**
     - Tracks play counts per artist within a rolling 24-hour window in `media_tracker.db`.
     - Automatically triggers when you reach **3 plays in 24 hours** from any artist.
@@ -119,6 +123,7 @@ This document preserves the complete chronological history, technical decisions,
     - `Ignore Release`: Mutes this specific album forever.
     - `Mute Artist`: Mutes the entire artist forever.
   - **CLI Testing & Management Suite (`test_integration.py`):** Provides instant simulation, testing, and ignore list management (`--ignore-artist`, `--ignore-release`, `--list-ignored`).
+  - **Live Verification:** Successfully verified live playback capture from Jellyfin (`Jakojako` and `Khruangbin`), discovery of 2025 release *The Universe Smiles Upon You ii*, and dispatch to mobile ntfy with interactive action buttons.
 
 ---
 
