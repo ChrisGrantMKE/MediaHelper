@@ -142,3 +142,13 @@ This document preserves the complete chronological history, technical decisions,
 | **`process_architecture.html`** | Interactive visual process map and real-time classifier tester. |
 | **`STANDARDIZATION_GUIDE.md`** | Master operational manual and 2-tier genre taxonomy guide. |
 | **`.gemini/rules.md`** | Persistent workspace rules and conversation bridge for Antigravity/Gemini. |
+| **`TODO.md`** | Project roadmap and upcoming engineering tasks. |
+
+---
+
+## 🔮 Upcoming Engineering Roadmap (Phase 11)
+- **Phase 11: Cloudflare REST API Dynamic DNS (Auto-IP Updater)**
+  - Automated public WAN IP detection via lightweight trace endpoints (`1.1.1.1/cdn-cgi/trace`, `api.ipify.org`).
+  - Cache current IP state to avoid unnecessary API requests.
+  - Direct Cloudflare REST API `PATCH` to update `A` records for `chrisgrants.net` and subdomains on IP drift.
+  - Notification hook to push an alert via `ntfy` (`SeaGee_new_releases` / server topic) whenever the IP changes.

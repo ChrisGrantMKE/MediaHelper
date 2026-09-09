@@ -109,3 +109,8 @@ python test_integration.py --ignore-release "Artist Name" "Album Title"
 
 ## 📖 Master Documentation
 For the full taxonomy list, library bucket mappings, and artist rules, refer to [STANDARDIZATION_GUIDE.md](STANDARDIZATION_GUIDE.md).
+
+---
+
+## 📋 Roadmap & Next Up
+- [ ] **Cloudflare REST API Auto-IP Updating (Dynamic DNS):** Automatic public IP detection and DNS record synchronization for `chrisgrants.net`. See full technical design in [TODO.md](TODO.md).
