@@ -125,6 +125,21 @@ This document preserves the complete chronological history, technical decisions,
   - **CLI Testing & Management Suite (`test_integration.py`):** Provides instant simulation, testing, and ignore list management (`--ignore-artist`, `--ignore-release`, `--list-ignored`).
   - **Live Verification:** Successfully verified live playback capture from Jellyfin (`Jakojako` and `Khruangbin`), discovery of 2025 release *The Universe Smiles Upon You ii*, and dispatch to mobile ntfy with interactive action buttons.
 
+### Phase 11: Catalog-Wide Track-Level Artist Tag Sanitization & Ingestion Guard
+- **Problem:** Jellyfin's "Artists" tab created rogue artist cards for tracks with numeric tags (`01`–`06`), movement underscores (`05_`), bracketed vinyl catalogs (`[wag 029] Cobblestone Jazz`), single letters (`A`), and unknown placeholders.
+- **Solution:**
+  - **Tool Created (`clean_track_artist_tags.py`):** Standalone auditor & fixer with classical composition recognition (e.g. Beethoven Septet Op. 20 $\rightarrow$ `Ludwig van Beethoven`), bracket stripping, track-number prefix stripping, and safe fallback logic.
+  - **Ingestion Guard (`ingest_new_music.py`):** Added pre-flight track artist sanitization rules directly to the intake engine to prevent regressions.
+  - **Catalog Audits & Repairs:**
+    - Cleaned Beethoven Septet Op. 20 tracks `01`–`06` and Ambient Rarities tracks (`05_`–`08_`, `A`, `B`).
+    - Consolidated `[wag 029] Cobblestone Jazz` into `Ambient Classical & Jazz/Cobblestone Jazz/Put the Lime in Da Coconut/`.
+    - Consolidated `205 Pato Banton...` into `Reggae & World/Pato Banton/`.
+    - Fixed `Va/Ninja 2009 Tour Sampler` in `Metal Industrial`, retagged to `Jane's Addiction`, `Nine Inch Nails`, and `Street Sweeper Social Club`, and moved to `Compilations`.
+    - Fixed `Burning Sounds, Bsrlp 922` holding *Rasta Pon Top*, relocated under `The Twinkle Brothers`, and retagged.
+    - Consolidated `Nine Inch Nails - Discography (1989-13) [channel Neo]` Deviations album into standard `Nine Inch Nails` folder.
+    - Moved `[bonus Track]` Halo III track to `Soundtracks & Holiday/Halo/Halo III/` and retagged.
+    - Audited all 4,568 audio tracks in `Metal Industrial` confirming 0 bad tags remaining.
+
 ---
 
 ## 🛠️ Summary of Scripts & Tools in Repository
@@ -137,6 +152,7 @@ This document preserves the complete chronological history, technical decisions,
 | **`bandcamp_client.py`** | Crawls Bandcamp artist discographies and extracts release dates, titles, and artwork via JSON-LD. |
 | **`notifier.py`** | Dispatches notifications to ntfy mobile push, Markdown (`NEW_RELEASES.md`), Discord, or Email. |
 | **`test_integration.py`** | CLI simulation and management tool for testing Bandcamp queries, plays, and muted items. |
+| **`clean_track_artist_tags.py`** | Standalone catalog auditor & repair engine for track-level artist tags across all libraries. |
 | **`jellyfin_bandcamp.service`** | Systemd unit file for 24/7 background service deployment on Linux. |
 | **`START_WEBHOOK_LISTENER.bat`** | Windows one-click launcher for local testing. |
 | **`config.json` / `config.example.json`** | Configuration file for ports, thresholds, paths, and notification channels. |
@@ -151,8 +167,8 @@ This document preserves the complete chronological history, technical decisions,
 
 ---
 
-## 🔮 Upcoming Engineering Roadmap (Phase 11)
-- **Phase 11: Cloudflare REST API Dynamic DNS (Auto-IP Updater)**
+## 🔮 Upcoming Engineering Roadmap (Phase 12)
+- **Phase 12: Cloudflare REST API Dynamic DNS (Auto-IP Updater)**
   - Automated public WAN IP detection via lightweight trace endpoints (`1.1.1.1/cdn-cgi/trace`, `api.ipify.org`).
   - Cache current IP state to avoid unnecessary API requests.
   - Direct Cloudflare REST API `PATCH` to update `A` records for `chrisgrants.net` and subdomains on IP drift.
