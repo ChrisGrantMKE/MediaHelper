@@ -58,13 +58,6 @@ for r in audio_rows:
 
 print(f"Found {len(active_artist_names)} unique active artist names referenced across all audio tracks.")
 
-# Also check ItemValues if present
-if "Value" in iv_cols:
-    cur.execute("SELECT DISTINCT Value FROM ItemValues WHERE Value IS NOT NULL;")
-    for row in cur.fetchall():
-        if row[0]:
-            active_artist_names.add(str(row[0]).strip())
-
 # 3. Find all MusicArtist rows in BaseItems
 cur.execute("""
 SELECT Id, Name, type 
@@ -76,8 +69,8 @@ all_artist_rows = cur.fetchall()
 print(f"Total MusicArtist rows in database: {len(all_artist_rows)}")
 
 # 4. Compare and find ghost artists
-sample_targets = ['bauhaus', 'add n to', 'bog body', 'circuit des yeux', 'clock dva']
-print("\n--- Inspecting Specific Target Artists ---")
+sample_targets = ['01', '02', '03', '04', '05', '05_', '06', '06_', '07_', '08_', 'notag', 'wag 029', 'bonus track', 'bauhaus', 'va']
+print("\n--- Inspecting Target/Suspicious Artists ---")
 
 ghosts_to_delete = []
 
@@ -86,8 +79,8 @@ for art_id, name, atype in all_artist_rows:
     is_active = (name_str in active_artist_names)
     
     nl = name_str.lower()
-    if any(t in nl for t in sample_targets):
-        status = "ACTIVE (Has Songs)" if is_active else "GHOST (0 Songs)"
+    if nl in ('01', '02', '03', '04', '05', '06', '07', '08', '05_', '06_', '07_', '08_', 'a', 'b', '[notag]', 'va') or any(t in nl for t in ['wag 029', 'bonus track']):
+        status = "ACTIVE (Has Songs in BaseItems!)" if is_active else "GHOST (0 Songs)"
         print(f"  • '{name_str}' (ID={art_id}) -> Status: {status}")
 
     if not is_active:
