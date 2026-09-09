@@ -1,0 +1,46 @@
+{
+  "server": {
+    "host": "0.0.0.0",
+    "port": 5055,
+    "callback_url": "http://192.168.8.241:5055"
+  },
+  "tracking": {
+    "min_plays_per_day": 3,
+    "window_hours": 24,
+    "cooldown_days": 7,
+    "notify_mode": "newer_only"
+  },
+  "library": {
+    "root_dirs": [
+      "/var/www/chrisgrants.net/data/chris/files/Media/Music Albums",
+      "\\\\CHRISGRANTS\\files\\Media\\Music Albums"
+    ],
+    "jellyfin_db_path": "/home/chris/jellyfin/config/data/jellyfin.db"
+  },
+  "ignored_artists": [],
+  "ignored_releases": {},
+  "notifications": {
+    "markdown_digest": {
+      "enabled": true,
+      "file_path": "NEW_RELEASES.md"
+    },
+    "email": {
+      "enabled": false,
+      "smtp_host": "smtp.gmail.com",
+      "smtp_port": 587,
+      "use_tls": true,
+      "username": "",
+      "password": "",
+      "to_address": ""
+    },
+    "discord": {
+      "enabled": false,
+      "webhook_url": ""
+    },
+    "ntfy": {
+      "enabled": true,
+      "server_url": "https://ntfy.sh",
+      "topic": "SeaGee_new_releases"
+    }
+  }
+}

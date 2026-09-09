@@ -17,3 +17,8 @@ desktop.ini
 
 # Logs
 *.log
+
+# Databases & Backups
+*.db
+*.bak*
+media_tracker.db

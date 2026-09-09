@@ -102,10 +102,39 @@ This document preserves the complete chronological history, technical decisions,
 
 ---
 
+### Phase 10: Real-Time Jellyfin Playback Tracker & Bandcamp Release Notifier
+- **Problem:** When listening to music in Jellyfin, there was no automated way to discover if favorite artists have newer or unowned releases on Bandcamp without manual checking.
+- **Solution:** Designed and deployed an event-driven discovery pipeline.
+  - **Jellyfin Webhook Daemon (`jellyfin_listener.py`):** Runs on port 5055 as a Linux systemd service (`jellyfin_bandcamp.service`). Listens for `PlaybackStop` events from Jellyfin's official Webhook plugin.
+  - **SQLite Playback Tracker (`playback_tracker.py`):**
+    - Tracks play counts per artist within a rolling 24-hour window in `media_tracker.db`.
+    - Automatically triggers when you reach **3 plays in 24 hours** from any artist.
+    - Implements a **7-day cooldown guard** to avoid spam during album binges.
+    - Supports recurring nudges: after 7 days, if you listen again, it nudges you about new releases unless explicitly muted.
+  - **Library Inspector (`library_inspector.py`):** Audits local albums on disk and in `jellyfin.db` to extract owned albums and the latest release year.
+  - **Bandcamp Discovery Engine (`bandcamp_client.py`):** Scrapes Bandcamp discographies directly without triggering bot protection, parsing `application/ld+json` for release dates and artwork.
+  - **Multi-Channel Notifier (`notifier.py`):** Dispatches alerts via ntfy push notifications (`SeaGee_new_releases`), local Markdown (`NEW_RELEASES.md`), Discord webhooks, or HTML emails.
+  - **Interactive Action Buttons:** Direct buttons on the phone push notification:
+    - `Open Bandcamp`: Opens release in browser.
+    - `Ignore Release`: Mutes this specific album forever.
+    - `Mute Artist`: Mutes the entire artist forever.
+  - **CLI Testing & Management Suite (`test_integration.py`):** Provides instant simulation, testing, and ignore list management (`--ignore-artist`, `--ignore-release`, `--list-ignored`).
+
+---
+
 ## 🛠️ Summary of Scripts & Tools in Repository
 
 | Script | Purpose |
 | :--- | :--- |
+| **`jellyfin_listener.py`** | Lightweight HTTP webhook server (port 5055) receiving Jellyfin playback events and handling interactive actions. |
+| **`playback_tracker.py`** | SQLite tracker (`media_tracker.db`) counting plays, enforcing 7-day cooldowns, and managing ignore lists. |
+| **`library_inspector.py`** | Cross-checks owned albums on disk and in `jellyfin.db` to identify newest release years. |
+| **`bandcamp_client.py`** | Crawls Bandcamp artist discographies and extracts release dates, titles, and artwork via JSON-LD. |
+| **`notifier.py`** | Dispatches notifications to ntfy mobile push, Markdown (`NEW_RELEASES.md`), Discord, or Email. |
+| **`test_integration.py`** | CLI simulation and management tool for testing Bandcamp queries, plays, and muted items. |
+| **`jellyfin_bandcamp.service`** | Systemd unit file for 24/7 background service deployment on Linux. |
+| **`START_WEBHOOK_LISTENER.bat`** | Windows one-click launcher for local testing. |
+| **`config.json` / `config.example.json`** | Configuration file for ports, thresholds, paths, and notification channels. |
 | **`ingest_new_music.py`** | Automated staging intake, 320k transcoding, ambient classification, name inversion, and quality upgrades. |
 | **`INGEST_NEW_MUSIC.bat`** | One-click Windows launcher for the ingestion engine. |
 | **`unify_and_deduplicate_artists.py`** | Collection-wide deduplication engine with 2-step Windows renames and self-healing casing. |

@@ -1,0 +1,14 @@
+[Unit]
+Description=Jellyfin Bandcamp Release Watcher
+After=network.target jellyfin.service
+
+[Service]
+Type=simple
+User=chris
+WorkingDirectory=/var/www/chrisgrants.net/data/chris/files/Media/Music Albums
+ExecStart=/usr/bin/python3 "/var/www/chrisgrants.net/data/chris/files/Media/Music Albums/jellyfin_listener.py" "/var/www/chrisgrants.net/data/chris/files/Media/Music Albums/config.json"
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

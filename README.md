@@ -84,6 +84,26 @@ docker start jellyfin
 ```
 The script will automatically back up your database, identify all 0-song ghost records, delete them, and optimize SQLite.
 
+### 4. Real-Time Bandcamp Release Watcher (Jellyfin Webhook)
+Automatically detects when you listen to **3 songs from any artist in 24 hours**, checks your collection, and queries Bandcamp for newer releases:
+```bash
+# Start on Linux via systemd:
+sudo systemctl enable --now jellyfin_bandcamp
+
+# Or run interactively:
+python jellyfin_listener.py config.json
+
+# Test an artist or simulate plays via CLI:
+python test_integration.py --test-bandcamp "Artist Name"
+python test_integration.py --simulate-plays "Artist Name" --count 3
+
+# Manage muted artists & ignored releases:
+python test_integration.py --list-ignored
+python test_integration.py --ignore-artist "Artist Name"
+python test_integration.py --ignore-release "Artist Name" "Album Title"
+```
+- **Notifications:** Supports mobile push via **ntfy.sh**, **Discord webhooks**, **HTML email**, and local Markdown ([`NEW_RELEASES.md`](NEW_RELEASES.md)).
+- **Interactive Controls:** Tap "Open Bandcamp", "Ignore Release", or "Mute Artist" directly from your phone notifications.
 
 ---
 
