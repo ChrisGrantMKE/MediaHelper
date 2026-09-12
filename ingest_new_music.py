@@ -225,6 +225,7 @@ EXACT_OVERRIDES = {
     "rs tangent": "RS Tangent",
     "misfits": "Misfits",
     "the misfits": "Misfits",
+    "stars of the lid": "Stars of the Lid",
     "מזמור": "Mizmor"
 }
 

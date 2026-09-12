@@ -40,6 +40,7 @@ EXACT_OVERRIDES = {
     "מזמור": "Mizmor",
     "jane's addiction": "Jane's Addiction",
     "janes addiction": "Jane's Addiction",
+    "stars of the lid": "Stars of the Lid",
     "bob marley & the wailers": "Bob Marley & The Wailers"
 }
 
