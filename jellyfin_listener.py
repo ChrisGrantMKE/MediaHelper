@@ -106,20 +106,29 @@ class WebhookHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(status_data).encode("utf-8"))
             return
 
-        # Ignore Artist endpoint
+        # Ignore Artist endpoint (Temporary Mute, default 180 days / ~6 months)
         if path == "/ignore_artist":
             artist = params.get("artist", [""])[0]
             if not artist:
                 self._set_headers(400, "text/html")
                 self.wfile.write(b"Missing artist parameter.")
                 return
-            self.tracker.ignore_artist(artist)
-            logger.info(f"🚫 [Mute] Artist '{artist}' has been muted.")
+            
+            raw_days = params.get("days", [None])[0]
+            default_days = self.config.get("tracking", {}).get("artist_mute_days", 180) if self.config else 180
+            try:
+                mute_days = int(raw_days) if raw_days is not None else default_days
+            except ValueError:
+                mute_days = default_days
+
+            self.tracker.ignore_artist(artist, mute_days=mute_days)
+            duration_desc = f"{mute_days} days (~6 months)" if mute_days == 180 else (f"{mute_days} days" if mute_days else "indefinitely")
+            logger.info(f"🚫 [Mute] Artist '{artist}' has been muted for {duration_desc}.")
             html_out = HTML_CONFIRMATION_TEMPLATE.format(
                 title="Artist Muted",
                 heading="🚫 Artist Muted",
                 item=artist,
-                message=f"You will no longer receive Bandcamp alerts for <b>{artist}</b>."
+                message=f"Bandcamp notifications for <b>{artist}</b> have been paused for <b>{duration_desc}</b>."
             )
             self._set_headers(200, "text/html; charset=utf-8")
             self.wfile.write(html_out.encode("utf-8"))
@@ -184,10 +193,17 @@ class WebhookHandler(BaseHTTPRequestHandler):
         if path == "/ignore_artist":
             artist = payload.get("artist") or params.get("artist", [""])[0]
             if artist:
-                self.tracker.ignore_artist(artist)
-                logger.info(f"🚫 [Mute] Artist '{artist}' has been muted via POST.")
+                raw_days = payload.get("days") or params.get("days", [None])[0]
+                default_days = self.config.get("tracking", {}).get("artist_mute_days", 180) if self.config else 180
+                try:
+                    mute_days = int(raw_days) if raw_days is not None else default_days
+                except ValueError:
+                    mute_days = default_days
+
+                self.tracker.ignore_artist(artist, mute_days=mute_days)
+                logger.info(f"🚫 [Mute] Artist '{artist}' has been muted for {mute_days} days via POST.")
                 self._set_headers(200)
-                self.wfile.write(json.dumps({"status": "muted", "artist": artist}).encode("utf-8"))
+                self.wfile.write(json.dumps({"status": "muted", "artist": artist, "mute_days": mute_days}).encode("utf-8"))
                 return
             self._set_headers(400)
             self.wfile.write(json.dumps({"error": "artist required"}).encode("utf-8"))

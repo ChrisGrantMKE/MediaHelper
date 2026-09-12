@@ -56,9 +56,16 @@ class PlaybackTracker:
             cur.execute("""
             CREATE TABLE IF NOT EXISTS ignored_artists (
                 artist TEXT PRIMARY KEY,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                mute_until TIMESTAMP
             );
             """)
+            # Ensure mute_until column exists if table was created in an earlier schema
+            try:
+                cur.execute("ALTER TABLE ignored_artists ADD COLUMN mute_until TIMESTAMP;")
+            except Exception:
+                pass
+
             cur.execute("""
             CREATE TABLE IF NOT EXISTS ignored_releases (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -70,13 +77,25 @@ class PlaybackTracker:
             """)
             conn.commit()
 
-    def ignore_artist(self, artist):
+    def ignore_artist(self, artist, mute_days=180):
+        """
+        Mutes an artist for a configurable duration (default: 180 days / ~6 months).
+        If mute_days is None or 0, mutes indefinitely.
+        """
         artist_clean = artist.strip()
+        now = datetime.datetime.now()
+        mute_until = (now + datetime.timedelta(days=mute_days)).strftime("%Y-%m-%d %H:%M:%S") if mute_days else None
+        now_str = now.strftime("%Y-%m-%d %H:%M:%S")
+
         with self._get_conn() as conn:
             cur = conn.cursor()
             cur.execute("""
-            INSERT OR IGNORE INTO ignored_artists (artist) VALUES (?)
-            """, (artist_clean,))
+            INSERT INTO ignored_artists (artist, created_at, mute_until) 
+            VALUES (?, ?, ?)
+            ON CONFLICT(artist) DO UPDATE SET 
+                created_at = excluded.created_at,
+                mute_until = excluded.mute_until
+            """, (artist_clean, now_str, mute_until))
             conn.commit()
         return True
 
@@ -90,20 +109,66 @@ class PlaybackTracker:
 
     def is_artist_ignored(self, artist):
         norm = normalize_text(artist)
+        now = datetime.datetime.now()
+        expired_to_clean = []
+
         with self._get_conn() as conn:
             cur = conn.cursor()
-            cur.execute("SELECT artist FROM ignored_artists")
+            cur.execute("SELECT artist, mute_until FROM ignored_artists")
             rows = cur.fetchall()
             for r in rows:
-                if normalize_text(r[0]) == norm:
+                row_artist, mute_until_str = r[0], r[1]
+                if normalize_text(row_artist) == norm:
+                    if mute_until_str:
+                        try:
+                            mute_until = datetime.datetime.fromisoformat(mute_until_str.replace("Z", ""))
+                            if now > mute_until:
+                                expired_to_clean.append(row_artist)
+                                continue
+                        except Exception:
+                            pass
                     return True
+
+            if expired_to_clean:
+                for exp in expired_to_clean:
+                    cur.execute("DELETE FROM ignored_artists WHERE artist = ?", (exp,))
+                conn.commit()
+
         return False
 
     def get_ignored_artists(self):
+        now = datetime.datetime.now()
+        expired_to_clean = []
+        active_ignored = []
+
         with self._get_conn() as conn:
             cur = conn.cursor()
-            cur.execute("SELECT artist, created_at FROM ignored_artists ORDER BY artist")
-            return [{"artist": r[0], "created_at": r[1]} for r in cur.fetchall()]
+            cur.execute("SELECT artist, created_at, mute_until FROM ignored_artists ORDER BY artist")
+            rows = cur.fetchall()
+            for r in rows:
+                artist_name, created_at, mute_until_str = r[0], r[1], r[2]
+                is_expired = False
+                if mute_until_str:
+                    try:
+                        mute_until = datetime.datetime.fromisoformat(mute_until_str.replace("Z", ""))
+                        if now > mute_until:
+                            is_expired = True
+                            expired_to_clean.append(artist_name)
+                    except Exception:
+                        pass
+                if not is_expired:
+                    active_ignored.append({
+                        "artist": artist_name,
+                        "created_at": created_at,
+                        "mute_until": mute_until_str
+                    })
+
+            if expired_to_clean:
+                for exp in expired_to_clean:
+                    cur.execute("DELETE FROM ignored_artists WHERE artist = ?", (exp,))
+                conn.commit()
+
+        return active_ignored
 
     def ignore_release(self, artist, release_title):
         artist_clean = artist.strip()

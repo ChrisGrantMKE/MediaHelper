@@ -8,6 +8,7 @@
     "min_plays_per_day": 3,
     "window_hours": 24,
     "cooldown_days": 7,
+    "artist_mute_days": 180,
     "notify_mode": "newer_only"
   },
   "library": {

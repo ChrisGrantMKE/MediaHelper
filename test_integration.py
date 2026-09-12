@@ -137,7 +137,8 @@ def list_ignored():
     artists = tracker.get_ignored_artists()
     print(f"Muted Artists ({len(artists)}):")
     for a in artists:
-        print(f"  • {a['artist']} (since {a['created_at']})")
+        until_str = f" | Muted until: {a['mute_until']}" if a.get('mute_until') else " | Indefinite"
+        print(f"  • {a['artist']} (since {a['created_at']}{until_str})")
 
     releases = tracker.get_ignored_releases()
     print(f"\nIgnored Releases ({len(releases)}):")

@@ -218,8 +218,8 @@ class NotificationEngine:
                 })
                 actions.append({
                     "action": "view",
-                    "label": "Mute Artist",
-                    "url": f"{cb}/ignore_artist?artist={q_art}"
+                    "label": "Mute (6 Mos)",
+                    "url": f"{cb}/ignore_artist?artist={q_art}&days=180"
                 })
 
             payload = {
