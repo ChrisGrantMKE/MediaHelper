@@ -178,6 +178,11 @@ All audio files are tagged using the format:
   - `R&B & Soul; Funk`
   - `R&B & Soul; Motown`
   - `R&B & Soul; Neo-Soul`
+* **Soundtracks & Holiday**
+  - `Soundtracks & Holiday; Sports & Novelty` (Team fight songs, gameday/tailgate music, stadium anthems, polkas)
+  - `Soundtrack; Score` (Film, TV, and video game instrumental scores)
+  - `Soundtrack; OST` (Original soundtracks and multi-artist compilations)
+  - `Holiday; Christmas` (Christmas and holiday seasonal releases)
 
 ---
 

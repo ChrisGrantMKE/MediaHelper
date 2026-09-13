@@ -129,6 +129,18 @@ GENRE_MAP = {
     "hip-hop": "Hip-Hop; East Coast Hip-Hop",
     "rap": "Hip-Hop; East Coast Hip-Hop",
     "trap": "Hip-Hop; Trap",
+
+    # Soundtracks & Holiday
+    "soundtrack": "Soundtrack; OST",
+    "ost": "Soundtrack; OST",
+    "score": "Soundtrack; Score",
+    "film score": "Soundtrack; Score",
+    "christmas": "Holiday; Christmas",
+    "holiday": "Holiday; Christmas",
+    "sports": "Soundtracks & Holiday; Sports & Novelty",
+    "tailgate": "Soundtracks & Holiday; Sports & Novelty",
+    "novelty": "Soundtracks & Holiday; Sports & Novelty",
+    "polka": "Soundtracks & Holiday; Sports & Novelty",
 }
 
 KNOWN_AMBIENT_ARTISTS = {
@@ -408,7 +420,9 @@ def infer_library(genre, artist, album, filepath):
         return "Metal Industrial"
     if any(x in g_lower for x in ["reggae", "world", "folk", "americana", "bluegrass"]):
         return "Reggae & World"
-    if any(x in p_lower for x in ["soundtrack", "ost", "holiday", "christmas", "score"]):
+    if any(x in p_lower for x in ["soundtrack", "ost", "holiday", "christmas", "score", "sports", "tailgate", "packer"]):
+        return "Soundtracks & Holiday"
+    if any(x in g_lower for x in ["soundtrack", "holiday", "sports & novelty", "score", "ost"]):
         return "Soundtracks & Holiday"
     if any(x in g_lower for x in ["rock", "pop", "hip-hop", "rap", "punk", "indie", "r&b", "soul", "funk"]):
         return "Rock & Pop"
