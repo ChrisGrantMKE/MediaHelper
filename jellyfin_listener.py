@@ -10,7 +10,8 @@ sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
 from playback_tracker import PlaybackTracker
 from library_inspector import LibraryInspector
-from bandcamp_client import BandcampClient
+from bandcamp_client import BandcampClient, is_album_match
+from discogs_client import DiscogsClient
 from notifier import NotificationEngine
 
 # Configure logging
@@ -83,6 +84,7 @@ class WebhookHandler(BaseHTTPRequestHandler):
     tracker = None
     library = None
     bandcamp = None
+    discogs = None
     notifier = None
     config = None
 
@@ -340,57 +342,133 @@ class WebhookHandler(BaseHTTPRequestHandler):
             cfg_ignored = self.config.get("ignored_releases", {}).get(artist, [])
             all_ignored = list(set(ignored_titles + cfg_ignored))
 
-            # Query Bandcamp
-            tracking_cfg = self.config.get("tracking", {})
-            notify_mode = tracking_cfg.get("notify_mode", "newer_only")
+            # Query Bandcamp (if enabled)
+            bc_enabled = self.config.get("bandcamp", {}).get("enabled", True)
+            bc_releases = []
+            bc_url = None
+            if bc_enabled and self.bandcamp:
+                logger.info(f"🌐 Querying Bandcamp for '{artist}'...")
+                try:
+                    bc_res = self.bandcamp.find_new_releases(
+                        artist_name=artist,
+                        owned_albums=owned_albums,
+                        latest_owned_year=latest_year,
+                        notify_mode=notify_mode,
+                        ignored_titles=all_ignored
+                    )
+                    bc_releases = bc_res.get("releases", [])
+                    bc_url = bc_res.get("bandcamp_url")
+                    if bc_res.get("status") == "artist_not_found":
+                        logger.info(f"ℹ️ Bandcamp page not found for '{artist}'")
+                    else:
+                        logger.info(f"📦 Bandcamp returned {len(bc_releases)} candidate release(s)")
+                except Exception as e:
+                    logger.error(f"⚠️ Bandcamp check failed for '{artist}': {e}")
 
-            logger.info(f"🌐 Querying Bandcamp for '{artist}'...")
-            bc_res = self.bandcamp.find_new_releases(
-                artist_name=artist,
-                owned_albums=owned_albums,
-                latest_owned_year=latest_year,
-                notify_mode=notify_mode,
-                ignored_titles=all_ignored
-            )
+            # Query Discogs (if enabled)
+            dc_enabled = self.config.get("discogs", {}).get("enabled", True)
+            dc_releases = []
+            dc_url = None
+            if dc_enabled and self.discogs:
+                logger.info(f"💿 Querying Discogs for '{artist}'...")
+                try:
+                    dc_res = self.discogs.find_new_releases(
+                        artist_name=artist,
+                        owned_albums=owned_albums,
+                        latest_owned_year=latest_year,
+                        notify_mode=notify_mode,
+                        ignored_titles=all_ignored
+                    )
+                    dc_releases = dc_res.get("releases", [])
+                    dc_url = dc_res.get("discogs_url")
+                    if dc_res.get("status") == "artist_not_found":
+                        logger.info(f"ℹ️ Discogs artist profile not found for '{artist}'")
+                    else:
+                        logger.info(f"📦 Discogs returned {len(dc_releases)} candidate release(s)")
+                except Exception as e:
+                    logger.error(f"⚠️ Discogs check failed for '{artist}': {e}")
 
-            status = bc_res.get("status")
-            new_releases = bc_res.get("releases", [])
-            bc_url = bc_res.get("bandcamp_url")
+            # Cross-reference and unify releases across both sources
+            unified_releases = []
+            merged_dc_indices = set()
 
-            if status == "artist_not_found":
-                logger.warning(f"⚠️ Bandcamp page not found for '{artist}'")
-                return {"status": "artist_not_found", "artist": artist}
+            for bc_r in bc_releases:
+                bc_title = bc_r.get("title", "")
+                matched_dc = None
+                matched_idx = None
+                for idx, dc_r in enumerate(dc_releases):
+                    if idx in merged_dc_indices:
+                        continue
+                    if is_album_match(bc_title, dc_r.get("title", "")):
+                        matched_dc = dc_r
+                        matched_idx = idx
+                        break
 
-            if not new_releases:
-                logger.info(f"✅ No new unowned releases found for '{artist}' (already up-to-date or ignored).")
+                if matched_dc:
+                    merged_dc_indices.add(matched_idx)
+                    unified = dict(bc_r)
+                    unified["source"] = "both"
+                    unified["source_label"] = "Bandcamp & Discogs"
+                    unified["bandcamp_url"] = bc_r.get("url")
+                    unified["discogs_url"] = matched_dc.get("url")
+                    if not unified.get("year") and matched_dc.get("year"):
+                        unified["year"] = matched_dc["year"]
+                    if not unified.get("cover_art") and matched_dc.get("cover_art"):
+                        unified["cover_art"] = matched_dc["cover_art"]
+                    unified_releases.append(unified)
+                else:
+                    bc_item = dict(bc_r)
+                    bc_item["source"] = "bandcamp"
+                    bc_item["source_label"] = "Bandcamp"
+                    bc_item["bandcamp_url"] = bc_r.get("url")
+                    unified_releases.append(bc_item)
+
+            for idx, dc_r in enumerate(dc_releases):
+                if idx not in merged_dc_indices:
+                    dc_item = dict(dc_r)
+                    dc_item["source"] = "discogs"
+                    dc_item["source_label"] = "Discogs"
+                    dc_item["discogs_url"] = dc_r.get("url")
+                    unified_releases.append(dc_item)
+
+            if not unified_releases:
+                logger.info(f"✅ No new unowned releases found for '{artist}' on Bandcamp or Discogs (already up-to-date or ignored).")
                 self.tracker.mark_checked_without_notification(artist)
-                return {"status": "up_to_date", "artist": artist, "bandcamp_url": bc_url}
+                return {
+                    "status": "up_to_date",
+                    "artist": artist,
+                    "bandcamp_url": bc_url,
+                    "discogs_url": dc_url
+                }
 
-            logger.info(f"🎉 FOUND {len(new_releases)} NEW RELEASE(S) FOR '{artist}'!")
-            for r in new_releases:
-                logger.info(f"   - {r.get('title')} ({r.get('date_published', r.get('year'))}) -> {r.get('url')}")
+            logger.info(f"🎉 FOUND {len(unified_releases)} NEW RELEASE(S) FOR '{artist}' ACROSS SOURCES!")
+            for r in unified_releases:
+                source = r.get("source_label", "Unknown")
+                logger.info(f"   [{source}] {r.get('title')} ({r.get('date_published', r.get('year'))}) -> {r.get('url')}")
 
             # Callback URL for action buttons (Ignore Release / Mute Artist)
             callback_url = self.config.get("server", {}).get("callback_url")
+            primary_url = bc_url or dc_url
 
             # Dispatch notifications
             dispatch_results = self.notifier.dispatch(
                 artist,
-                new_releases,
-                bandcamp_url=bc_url,
+                unified_releases,
+                bandcamp_url=primary_url,
                 callback_url=callback_url
             )
             logger.info(f"📬 Notification dispatch results: {dispatch_results}")
 
             # Update tracker cooldown
-            self.tracker.mark_notified(artist, new_releases)
+            self.tracker.mark_notified(artist, unified_releases)
 
             return {
                 "status": "notified",
                 "artist": artist,
                 "bandcamp_url": bc_url,
-                "releases_found": len(new_releases),
-                "releases": new_releases,
+                "discogs_url": dc_url,
+                "releases_found": len(unified_releases),
+                "releases": unified_releases,
                 "dispatch": dispatch_results
             }
         except Exception as e:
@@ -409,17 +487,25 @@ def run_server(config_path="config.json"):
         jellyfin_db_path=config.get("library", {}).get("jellyfin_db_path")
     )
     bandcamp = BandcampClient(tracker=tracker)
+    
+    discogs_cfg = config.get("discogs", {})
+    discogs = DiscogsClient(
+        token=discogs_cfg.get("token"),
+        user_agent=discogs_cfg.get("user_agent"),
+        tracker=tracker
+    )
     notifier = NotificationEngine(config=config)
 
     # Attach instances to handler class
     WebhookHandler.tracker = tracker
     WebhookHandler.library = library
     WebhookHandler.bandcamp = bandcamp
+    WebhookHandler.discogs = discogs
     WebhookHandler.notifier = notifier
     WebhookHandler.config = config
 
     server = HTTPServer((host, port), WebhookHandler)
-    logger.info(f"🚀 Jellyfin-Bandcamp Webhook Listener active on http://{host}:{port}")
+    logger.info(f"🚀 Jellyfin Release Watcher (Bandcamp + Discogs) active on http://{host}:{port}")
     logger.info(f"   Webhook Endpoint: http://<server-ip>:{port}/webhook")
     logger.info(f"   Health Check:     http://<server-ip>:{port}/health")
 

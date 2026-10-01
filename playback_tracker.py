@@ -54,6 +54,15 @@ class PlaybackTracker:
             );
             """)
             cur.execute("""
+            CREATE TABLE IF NOT EXISTS artist_discogs_map (
+                artist TEXT PRIMARY KEY,
+                discogs_id INTEGER NOT NULL,
+                discogs_url TEXT NOT NULL,
+                verified INTEGER DEFAULT 0,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            """)
+            cur.execute("""
             CREATE TABLE IF NOT EXISTS ignored_artists (
                 artist TEXT PRIMARY KEY,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -346,3 +355,27 @@ class PlaybackTracker:
                 updated_at = CURRENT_TIMESTAMP;
             """, (artist.strip(), url.strip(), verified))
             conn.commit()
+
+    def get_discogs_artist(self, artist):
+        with self._get_conn() as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT discogs_id, discogs_url FROM artist_discogs_map WHERE artist = ?", (artist.strip(),))
+            row = cur.fetchone()
+            if row:
+                return {"discogs_id": row[0], "discogs_url": row[1]}
+            return None
+
+    def save_discogs_artist(self, artist, discogs_id, url, verified=1):
+        with self._get_conn() as conn:
+            cur = conn.cursor()
+            cur.execute("""
+            INSERT INTO artist_discogs_map (artist, discogs_id, discogs_url, verified, updated_at)
+            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(artist) DO UPDATE SET
+                discogs_id = excluded.discogs_id,
+                discogs_url = excluded.discogs_url,
+                verified = excluded.verified,
+                updated_at = CURRENT_TIMESTAMP;
+            """, (artist.strip(), int(discogs_id), url.strip(), verified))
+            conn.commit()
+

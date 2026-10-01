@@ -11,6 +11,14 @@
     "artist_mute_days": 180,
     "notify_mode": "newer_only"
   },
+  "bandcamp": {
+    "enabled": true
+  },
+  "discogs": {
+    "enabled": true,
+    "token": "YOUR_DISCOGS_PERSONAL_ACCESS_TOKEN",
+    "user_agent": "MediaHelperReleaseChecker/1.0"
+  },
   "library": {
     "root_dirs": [
       "/var/www/chrisgrants.net/data/chris/files/Media/Music Albums",

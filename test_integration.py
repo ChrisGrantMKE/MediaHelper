@@ -7,7 +7,8 @@ sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
 from playback_tracker import PlaybackTracker
 from library_inspector import LibraryInspector
-from bandcamp_client import BandcampClient
+from bandcamp_client import BandcampClient, is_album_match
+from discogs_client import DiscogsClient
 from notifier import NotificationEngine
 
 def load_config(config_path="config.json"):
@@ -51,6 +52,30 @@ def test_library(artist_name, config):
     for a in res.get('owned_albums', [])[:10]:
         print(f"  • {a.get('title')} ({a.get('year')})")
 
+def test_discogs(artist_name, config):
+    print(f"\n=======================================================")
+    print(f"💿 Testing Discogs API for: '{artist_name}'")
+    print(f"=======================================================")
+    tracker = PlaybackTracker("media_tracker.db")
+    dc_cfg = config.get("discogs", {})
+    dc = DiscogsClient(
+        token=dc_cfg.get("token"),
+        user_agent=dc_cfg.get("user_agent"),
+        tracker=tracker
+    )
+    
+    info = dc.resolve_artist(artist_name)
+    print(f"🌐 Resolved Discogs Artist: {info}")
+    if not info:
+        print("❌ Could not resolve Discogs artist.")
+        return
+
+    print("📥 Fetching discography...")
+    discography = dc.get_discography(info["artist_id"], max_releases=15)
+    print(f"Found {len(discography)} unique main releases:")
+    for r in discography[:10]:
+        print(f"  • [{r.get('year')}] ({r.get('type')}): {r.get('title')} -> {r.get('url')}")
+
 def simulate_plays(artist_name, count, config):
     print(f"\n=======================================================")
     print(f"▶️ Simulating {count} Play(s) for: '{artist_name}'")
@@ -61,6 +86,12 @@ def simulate_plays(artist_name, count, config):
         jellyfin_db_path=config.get("library", {}).get("jellyfin_db_path")
     )
     bc = BandcampClient(tracker=tracker)
+    dc_cfg = config.get("discogs", {})
+    dc = DiscogsClient(
+        token=dc_cfg.get("token"),
+        user_agent=dc_cfg.get("user_agent"),
+        tracker=tracker
+    )
     notifier = NotificationEngine(config=config)
 
     min_plays = config.get("tracking", {}).get("min_plays_per_day", 3)
@@ -77,31 +108,91 @@ def simulate_plays(artist_name, count, config):
         print(f"Play #{i}: Count = {res['play_count']}/{min_plays} | Trigger? {res['should_trigger']} | Cooldown? {res['in_cooldown']}")
 
         if res["should_trigger"]:
-            print(f"\n🔥 THRESHOLD REACHED! Running discovery pipeline...")
+            print(f"\n🔥 THRESHOLD REACHED! Running discovery pipeline (Bandcamp + Discogs)...")
             lib_info = lib.inspect_artist(artist_name)
             owned = lib_info.get("owned_albums", [])
             latest_year = lib_info.get("latest_year")
             print(f"📁 Owned albums: {len(owned)}, Newest year: {latest_year}")
 
-            bc_res = bc.find_new_releases(
-                artist_name=artist_name,
-                owned_albums=owned,
-                latest_owned_year=latest_year,
-                notify_mode=notify_mode,
-                notified_titles=res.get("notified_releases", [])
-            )
+            # 1. Query Bandcamp
+            bc_releases = []
+            bc_url = None
+            if config.get("bandcamp", {}).get("enabled", True):
+                print(f"🌐 Querying Bandcamp for '{artist_name}'...")
+                bc_res = bc.find_new_releases(
+                    artist_name=artist_name,
+                    owned_albums=owned,
+                    latest_owned_year=latest_year,
+                    notify_mode=notify_mode,
+                    ignored_titles=res.get("notified_releases", [])
+                )
+                bc_releases = bc_res.get("releases", [])
+                bc_url = bc_res.get("bandcamp_url")
+                print(f"   Bandcamp Status: {bc_res.get('status')}, Candidates: {len(bc_releases)}")
 
-            new_rels = bc_res.get("releases", [])
-            print(f"🌐 Bandcamp Status: {bc_res.get('status')}")
-            print(f"🎉 New Releases Found: {len(new_rels)}")
-            for r in new_rels:
-                print(f"   - {r.get('title')} ({r.get('date_published') or r.get('year')}) -> {r.get('url')}")
+            # 2. Query Discogs
+            dc_releases = []
+            dc_url = None
+            if config.get("discogs", {}).get("enabled", True):
+                print(f"💿 Querying Discogs for '{artist_name}'...")
+                dc_res = dc.find_new_releases(
+                    artist_name=artist_name,
+                    owned_albums=owned,
+                    latest_owned_year=latest_year,
+                    notify_mode=notify_mode,
+                    ignored_titles=res.get("notified_releases", [])
+                )
+                dc_releases = dc_res.get("releases", [])
+                dc_url = dc_res.get("discogs_url")
+                print(f"   Discogs Status: {dc_res.get('status')}, Candidates: {len(dc_releases)}")
 
-            if new_rels:
-                dispatch = notifier.dispatch(artist_name, new_rels, bandcamp_url=bc_res.get("bandcamp_url"))
+            # 3. Cross-reference & merge
+            unified = []
+            merged_dc_indices = set()
+            for bc_r in bc_releases:
+                matched_dc = None
+                matched_idx = None
+                for idx, dc_r in enumerate(dc_releases):
+                    if idx in merged_dc_indices: continue
+                    if is_album_match(bc_r.get("title", ""), dc_r.get("title", "")):
+                        matched_dc = dc_r
+                        matched_idx = idx
+                        break
+                if matched_dc:
+                    merged_dc_indices.add(matched_idx)
+                    item = dict(bc_r)
+                    item["source"] = "both"
+                    item["source_label"] = "Bandcamp & Discogs"
+                    item["bandcamp_url"] = bc_r.get("url")
+                    item["discogs_url"] = matched_dc.get("url")
+                    unified.append(item)
+                else:
+                    item = dict(bc_r)
+                    item["source"] = "bandcamp"
+                    item["source_label"] = "Bandcamp"
+                    item["bandcamp_url"] = bc_r.get("url")
+                    unified.append(item)
+
+            for idx, dc_r in enumerate(dc_releases):
+                if idx not in merged_dc_indices:
+                    item = dict(dc_r)
+                    item["source"] = "discogs"
+                    item["source_label"] = "Discogs"
+                    item["discogs_url"] = dc_r.get("url")
+                    unified.append(item)
+
+            print(f"🎉 Total Unified Unowned Releases: {len(unified)}")
+            for r in unified:
+                src = r.get("source_label", "Unknown")
+                print(f"   - [{src}] {r.get('title')} ({r.get('date_published') or r.get('year')}) -> {r.get('url')}")
+
+            if unified:
+                primary_url = bc_url or dc_url
+                dispatch = notifier.dispatch(artist_name, unified, bandcamp_url=primary_url)
                 print(f"📬 Dispatched: {dispatch}")
-                tracker.mark_notified(artist_name, new_rels)
+                tracker.mark_notified(artist_name, unified)
             else:
+                print("✅ Up to date: No new releases found on either platform.")
                 tracker.mark_checked_without_notification(artist_name)
 
 def show_status():
@@ -146,8 +237,9 @@ def list_ignored():
         print(f"  • {r['artist']} — {r['release_title']} (since {r['created_at']})")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="MediaHelper Bandcamp Tracker Test Utility")
+    parser = argparse.ArgumentParser(description="MediaHelper Release Tracker Test Utility (Bandcamp + Discogs)")
     parser.add_argument("--test-bandcamp", type=str, help="Test Bandcamp search and scraping for artist")
+    parser.add_argument("--test-discogs", type=str, help="Test Discogs API search and discography for artist")
     parser.add_argument("--test-library", type=str, help="Test owned albums and latest release year for artist")
     parser.add_argument("--simulate-plays", type=str, help="Simulate plays for artist")
     parser.add_argument("--count", type=int, default=3, help="Number of plays to simulate (default 3)")
@@ -181,6 +273,8 @@ if __name__ == "__main__":
         list_ignored()
     elif args.test_bandcamp:
         test_bandcamp(args.test_bandcamp, config)
+    elif args.test_discogs:
+        test_discogs(args.test_discogs, config)
     elif args.test_library:
         test_library(args.test_library, config)
     elif args.simulate_plays:

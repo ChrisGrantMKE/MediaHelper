@@ -46,14 +46,14 @@ class NotificationEngine:
 
         return results
 
-    def log_markdown(self, artist, releases, file_path="NEW_RELEASES.md", bandcamp_url=None):
+    def log_markdown(self, artist, releases, file_path="NEW_RELEASES.md", artist_url=None):
         try:
             now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
             lines = []
             if not os.path.exists(file_path):
-                lines.append("# 🎵 Bandcamp New Releases Log\n\n")
+                lines.append("# 🎵 New Music Releases Log\n\n")
 
-            artist_link = f"[{artist}]({bandcamp_url})" if bandcamp_url else artist
+            artist_link = f"[{artist}]({artist_url})" if artist_url else artist
             lines.append(f"### {artist_link} — Discovered {now_str}\n\n")
 
             for r in releases:
@@ -61,11 +61,20 @@ class NotificationEngine:
                 url = r.get("url", "#")
                 date = r.get("date_published") or (str(r.get("year")) if r.get("year") else "Unknown Date")
                 cover = r.get("cover_art")
+                source = r.get("source_label") or r.get("source", "").capitalize()
+                source_badge = f"`[{source}]` " if source else ""
+
+                links = []
+                if r.get("bandcamp_url"):
+                    links.append(f"[Bandcamp]({r['bandcamp_url']})")
+                if r.get("discogs_url"):
+                    links.append(f"[Discogs]({r['discogs_url']})")
+                link_str = f" ({' | '.join(links)})" if links else ""
 
                 if cover:
-                    lines.append(f"- [![{title}]({cover})]({url}) **[{title}]({url})** — *{date}*\n")
+                    lines.append(f"- [![{title}]({cover})]({url}) {source_badge}**[{title}]({url})** — *{date}*{link_str}\n")
                 else:
-                    lines.append(f"- **[{title}]({url})** — *{date}*\n")
+                    lines.append(f"- {source_badge}**[{title}]({url})** — *{date}*{link_str}\n")
 
             lines.append("\n---\n\n")
 
@@ -200,10 +209,13 @@ class NotificationEngine:
             click_url = first.get("url", "")
 
             actions = []
+            source_name = first.get("source_label") or first.get("source", "").capitalize()
+            label_text = f"Open {source_name}" if source_name else "Open Release"
+            
             if click_url:
                 actions.append({
                     "action": "view",
-                    "label": "Open Bandcamp",
+                    "label": label_text,
                     "url": click_url
                 })
 

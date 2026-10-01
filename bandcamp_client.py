@@ -44,6 +44,17 @@ def is_album_match(t1, t2):
         return False
     if n1 == n2:
         return True
+
+    # Check colon/hyphen prefix (e.g. "Artist: Title" vs "Title" or "Artist - Title" vs "Title")
+    if ':' in t1 and is_album_match(t1.split(':', 1)[1], t2):
+        return True
+    if ':' in t2 and is_album_match(t1, t2.split(':', 1)[1]):
+        return True
+    if ' - ' in t1 and is_album_match(t1.split(' - ', 1)[1], t2):
+        return True
+    if ' - ' in t2 and is_album_match(t1, t2.split(' - ', 1)[1]):
+        return True
+
     special = {'ii', 'iii', 'iv', '2', '3', 'live', 'remix', 'remixes', 'deluxe', 'instrumental', 'dub', 'acoustic', 'part', 'ep'}
     w1, w2 = set(n1.split()), set(n2.split())
     if (w1 - w2) & special or (w2 - w1) & special:
