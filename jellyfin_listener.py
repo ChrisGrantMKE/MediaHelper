@@ -334,6 +334,9 @@ class WebhookHandler(BaseHTTPRequestHandler):
 
             logger.info(f"📁 Owned albums for '{artist}': {len(owned_albums)} (Newest year: {latest_year})")
 
+            # Notification mode ('newer_only' vs 'all_missing')
+            notify_mode = self.config.get("tracking", {}).get("notify_mode", "newer_only")
+
             # Collect ignored releases for this artist
             db_ignored = self.tracker.get_ignored_releases(artist)
             ignored_titles = [r["release_title"] for r in db_ignored]

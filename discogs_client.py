@@ -7,6 +7,9 @@ import html
 import unicodedata
 import datetime
 import difflib
+import logging
+
+logger = logging.getLogger("DiscogsClient")
 
 from bandcamp_client import normalize_title, is_album_match, parse_release_year
 
@@ -39,9 +42,11 @@ class DiscogsClient:
                     return json.loads(raw)
         except urllib.error.HTTPError as e:
             if e.code not in (404,):
-                pass
-        except Exception:
-            pass
+                logger.warning(f"Discogs API HTTP error {e.code} for {url}: {e.reason}")
+        except urllib.error.URLError as e:
+            logger.warning(f"Discogs API URL error for {url}: {e.reason}")
+        except Exception as e:
+            logger.warning(f"Discogs API fetch error for {url}: {e}")
         return None
 
     def resolve_artist(self, artist_name):
