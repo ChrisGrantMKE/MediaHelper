@@ -234,6 +234,37 @@ class PlaybackTracker:
 
         with self._get_conn() as conn:
             cur = conn.cursor()
+
+            # Deduplicate rapid duplicate webhook firings for the exact same track within 15 seconds
+            if track:
+                cur.execute(
+                    "SELECT played_at FROM play_events WHERE artist = ? AND track = ? ORDER BY id DESC LIMIT 1",
+                    (artist_clean, track)
+                )
+                recent_row = cur.fetchone()
+                if recent_row and recent_row[0]:
+                    try:
+                        recent_time = datetime.datetime.strptime(recent_row[0], "%Y-%m-%d %H:%M:%S")
+                        if (now - recent_time).total_seconds() < 15:
+                            cur.execute(
+                                "SELECT COUNT(*) FROM play_events WHERE artist = ? AND played_at >= ?",
+                                (artist_clean, window_start.strftime("%Y-%m-%d %H:%M:%S"))
+                            )
+                            play_count = cur.fetchone()[0]
+                            return {
+                                "artist": artist_clean,
+                                "play_count": play_count,
+                                "threshold": min_plays,
+                                "window_hours": window_hours,
+                                "in_cooldown": True,
+                                "is_ignored": False,
+                                "last_notified": None,
+                                "notified_releases": [],
+                                "should_trigger": False
+                            }
+                    except Exception:
+                        pass
+
             # 1. Insert play event
             cur.execute(
                 "INSERT INTO play_events (artist, album, track, user_name, played_at) VALUES (?, ?, ?, ?, ?)",
@@ -247,9 +278,9 @@ class PlaybackTracker:
             )
             play_count = cur.fetchone()[0]
 
-            # 3. Check cooldown status
+            # 3. Check cooldown status (both notified cooldown and recent check cooldown)
             cur.execute(
-                "SELECT last_notified_at, notified_releases FROM artist_notifications WHERE artist = ?",
+                "SELECT last_notified_at, last_checked_at, notified_releases FROM artist_notifications WHERE artist = ?",
                 (artist_clean,)
             )
             row = cur.fetchone()
@@ -258,7 +289,7 @@ class PlaybackTracker:
             notified_releases = []
 
             if row:
-                last_notified_str, notified_json = row
+                last_notified_str, last_checked_str, notified_json = row
                 if last_notified_str:
                     try:
                         last_notified = datetime.datetime.strptime(last_notified_str, "%Y-%m-%d %H:%M:%S")
@@ -266,6 +297,17 @@ class PlaybackTracker:
                             in_cooldown = True
                     except Exception:
                         pass
+                
+                # Check recent check cooldown (don't re-scan if checked within last 24h, even if no new releases were found)
+                if not in_cooldown and last_checked_str:
+                    try:
+                        last_checked = datetime.datetime.strptime(last_checked_str, "%Y-%m-%d %H:%M:%S")
+                        check_cooldown_start = now - datetime.timedelta(hours=min(window_hours, 24))
+                        if last_checked > check_cooldown_start:
+                            in_cooldown = True
+                    except Exception:
+                        pass
+
                 if notified_json:
                     try:
                         notified_releases = json.loads(notified_json)

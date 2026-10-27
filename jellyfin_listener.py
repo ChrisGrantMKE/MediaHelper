@@ -87,6 +87,8 @@ class WebhookHandler(BaseHTTPRequestHandler):
     discogs = None
     notifier = None
     config = None
+    _active_scans = set()
+    _active_scans_lock = threading.Lock()
 
     def _set_headers(self, status=200, content_type="application/json"):
         self.send_response(status)
@@ -243,13 +245,22 @@ class WebhookHandler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps(res).encode("utf-8"))
 
     def handle_jellyfin_event(self, payload):
-        event_type = payload.get("NotificationType") or payload.get("event") or ""
+        event_type = (payload.get("NotificationType") or payload.get("event") or "").strip()
         item_type = payload.get("ItemType") or payload.get("item_type") or ""
 
         # Filter out video/book items (e.g. Movies, TV Episodes)
         ignored_video_types = ("movie", "episode", "series", "season", "video", "book", "trailer")
         if item_type and any(v in item_type.lower() for v in ignored_video_types):
             return {"status": "ignored", "reason": f"ItemType '{item_type}' is not audio"}
+
+        # Filter out non-playback-start events (PlaybackStop, PlaybackProgress, UserDataSaved)
+        # Jellyfin Webhook plugin sends both PlaybackStart and PlaybackStop at track transitions.
+        # Only PlaybackStart should count toward plays, preventing duplicate play counts and trigger races.
+        if event_type:
+            event_lower = event_type.lower()
+            if any(ign in event_lower for ign in ("stop", "progress", "userdata", "sync", "itemadded")):
+                logger.debug(f"Ignoring non-playback-start event '{event_type}'")
+                return {"status": "ignored", "reason": f"Event '{event_type}' is not a playback start"}
 
         artist = (
             payload.get("Artist") or
@@ -315,15 +326,30 @@ class WebhookHandler(BaseHTTPRequestHandler):
 
         # 2. Check if triggered
         if track_res["should_trigger"]:
-            logger.info(f"🔥 Threshold reached for '{artist}'! Starting library & Bandcamp analysis in background...")
+            artist_key = artist.strip().lower()
+            with WebhookHandler._active_scans_lock:
+                if artist_key in WebhookHandler._active_scans:
+                    logger.info(f"⏳ Analysis already in progress for '{artist}'. Skipping duplicate trigger.")
+                    return {"status": "in_progress", "artist": artist, "play_count": track_res["play_count"]}
+                WebhookHandler._active_scans.add(artist_key)
+
+            logger.info(f"🔥 Threshold reached for '{artist}'! Starting library & release analysis in background...")
             threading.Thread(
-                target=self.process_artist_trigger,
+                target=self._run_artist_trigger_safe,
                 args=(artist,),
                 daemon=True
             ).start()
             return {"status": "triggered", "artist": artist, "play_count": track_res["play_count"]}
 
         return {"status": "recorded", "artist": artist, "play_count": track_res["play_count"]}
+
+    def _run_artist_trigger_safe(self, artist, force=False):
+        artist_key = artist.strip().lower()
+        try:
+            self.process_artist_trigger(artist, force=force)
+        finally:
+            with WebhookHandler._active_scans_lock:
+                WebhookHandler._active_scans.discard(artist_key)
 
     def process_artist_trigger(self, artist, force=False):
         try:
