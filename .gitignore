@@ -22,3 +22,13 @@ desktop.ini
 *.db
 *.bak*
 media_tracker.db
+
+# Large media files and unpacked ebooks
+*.mp3
+*.wav
+*.flac
+*.epub
+*.original_epub
+The Intentional Father/unpacked/
+The Intentional Father/unpacked_secular/
+

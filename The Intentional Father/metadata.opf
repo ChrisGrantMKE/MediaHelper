@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='utf-8'?>
+<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="uuid_id" version="2.0">
+    <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
+        <dc:identifier opf:scheme="calibre" id="calibre_id">3</dc:identifier>
+        <dc:identifier opf:scheme="uuid" id="uuid_id">4e74b5aa-2653-488e-afbd-ca53f512b38c</dc:identifier>
+        <dc:title>The Intentional Father</dc:title>
+        <dc:creator opf:file-as="Tyson, Jon" opf:role="aut">Jon Tyson</dc:creator>
+        <dc:contributor opf:file-as="calibre" opf:role="bkp">calibre (9.6.0) [https://calibre-ebook.com]</dc:contributor>
+        <dc:date>2021-03-30T00:00:00+00:00</dc:date>
+        <dc:description>Backed by Barna Research, Jon Tyson offers practical steps to help men raise sons of consequence whose lives will be marked by honor, courage, self-discovery, and community.</dc:description>
+        <dc:publisher>Baker Publishing Group</dc:publisher>
+        <dc:language>eng</dc:language>
+        <dc:subject>Parenting/Fatherhood;Fathers and sons—­Religious aspects—­Christianity | Parenting—Religious aspects—­Christianity | Child rearing—­Religious aspects—­Christianity;REL012160;FAM020000;REL108030</dc:subject>
+        <meta name="calibre:timestamp" content="2026-07-08T02:24:12.485819+00:00"/>
+        <meta name="calibre:title_sort" content="Intentional Father, The"/>
+    </metadata>
+    <guide>
+        <reference type="cover" title="Cover" href="cover.jpg"/>
+    </guide>
+</package>
